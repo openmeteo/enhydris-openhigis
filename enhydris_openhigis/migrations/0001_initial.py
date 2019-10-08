@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                         to="enhydris.Garea",
                     ),
                 ),
-                ("perimeter_length", models.FloatField()),
+                ("length", models.FloatField()),
                 ("area", models.FloatField()),
             ],
             bases=("enhydris.garea",),
