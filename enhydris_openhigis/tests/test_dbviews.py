@@ -9,7 +9,7 @@ from enhydris_openhigis import models
 
 class WaterDistrictsDataMixin:
     def setUp(self):
-        mommy.make(enhydris_models.GareaCategory, id=1, descr="Water district")
+        mommy.make(enhydris_models.GareaCategory, id=2, descr="Water district")
         with connection.cursor() as cursor:
             cursor.execute(
                 """

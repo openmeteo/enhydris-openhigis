@@ -47,9 +47,9 @@ CREATE OR REPLACE FUNCTION insert_into_garea(NEW ANYELEMENT) RETURNS integer
 AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
-    SELECT openhigis.insert_into_gentity(NEW) INTO gentity_id;
+    gentity_id = openhigis.insert_into_gentity(NEW);
     INSERT INTO enhydris_garea (gentity_ptr_id, category_id)
-        VALUES (gentity_id, 1);
+        VALUES (gentity_id, 2);
     RETURN gentity_id;
 END;
 $$ LANGUAGE plpgsql;
