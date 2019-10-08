@@ -1,0 +1,123 @@
+MAP
+    NAME "OpenHI"
+    STATUS ON
+    SIZE 9040 7731
+    EXTENT 103986.57 3850796.18 1007945.14 4623933.00
+    UNITS meters
+    PROJECTION
+        "init=epsg:2100"
+    END
+    CONFIG MS_ERRORFILE "/var/log/mapserver/openhigis.log"
+
+    OUTPUTFORMAT
+      NAME "png"
+      DRIVER AGG/PNG
+      MIMETYPE "image/png"
+      IMAGEMODE RGBA
+      EXTENSION "png"
+      FORMATOPTION "GAMMA=0.75"
+    END
+    OUTPUTFORMAT
+      NAME "gif"
+      DRIVER GD/GIF
+      MIMETYPE "image/gif"
+      IMAGEMODE PC256
+      EXTENSION "gif"
+    END
+    OUTPUTFORMAT
+      NAME "png8"
+      DRIVER AGG/PNG8
+      MIMETYPE "image/png; mode=8bit"
+      IMAGEMODE RGBA
+      EXTENSION "png"
+      FORMATOPTION "QUANTIZE_FORCE=on"
+      FORMATOPTION "QUANTIZE_COLORS=256"
+      FORMATOPTION "GAMMA=0.75"
+    END
+    OUTPUTFORMAT
+      NAME "jpeg"
+      DRIVER AGG/JPEG
+      MIMETYPE "image/jpeg"
+      IMAGEMODE RGB
+      EXTENSION "jpg"
+      FORMATOPTION "GAMMA=0.75"
+    END
+    OUTPUTFORMAT
+      NAME "svg"
+      DRIVER CAIRO/SVG
+      MIMETYPE "image/svg+xml"
+      IMAGEMODE RGBA
+      EXTENSION "svg"
+    END
+    OUTPUTFORMAT
+      NAME "pdf"
+      DRIVER CAIRO/PDF
+      MIMETYPE "application/x-pdf"
+      IMAGEMODE RGBA
+      EXTENSION "pdf"
+    END
+    OUTPUTFORMAT
+      NAME "GTiff"
+      DRIVER GDAL/GTiff
+      MIMETYPE "image/tiff"
+      IMAGEMODE RGBA
+      EXTENSION "tif"
+    END
+    OUTPUTFORMAT
+        NAME GEOTIFF_16
+        DRIVER "GDAL/GTiff"
+        MIMETYPE "image/tiff"
+        IMAGEMODE FLOAT32
+        EXTENSION "tif"
+    END
+    OUTPUTFORMAT
+      NAME "cairopng"
+      DRIVER CAIRO/PNG
+      MIMETYPE "image/png"
+      IMAGEMODE RGBA
+      EXTENSION "png"
+    END
+
+    WEB
+        IMAGEPATH "/var/cache/mapserver/"
+        IMAGEURL "/mapserver_tmp/"
+        METADATA
+            "wms_title" "OpenHI"
+            "wms_onlineresource" "https://system.openhi.net/cgi-bin/mapserv?map=/opt/enhydris-openhi/enhydris-openhigis/openhigis.map&"
+            "wms_srs" "EPSG:4326 EPSG:2100 EPSG:3857"
+            "wms_enable_request" "*"
+            "wms_feature_info_mime_type" "text/html"
+
+            "wfs_title" "OpenHI"
+            "wfs_onlineresource" "https://system.openhi.net/cgi-bin/mapserv?map=/opt/enhydris-openhi/enhydris-openhigis/openhigis.map&"
+            "wfs_srs" "EPSG:2100 EPSG:4326 EPSG:3857"
+            "wfs_enable_request" "*"
+        END
+    END
+
+    LAYER
+        NAME "WaterDistricts"
+        TYPE POLYGON
+        CONNECTIONTYPE POSTGIS
+        CONNECTION "host=localhost dbname=openmeteo user=mapserver"
+        METADATA
+            "wms_title" "Water districts"
+            "wfs_title" "Water districts"
+            "gml_include_items" "all"
+            "gml_featureid" "id"
+        END
+        STATUS ON
+        DATA "geom FROM openhigis.water_districts USING UNIQUE id"
+        PROJECTION
+            "init=epsg:2100"
+        END
+        CLASS
+            NAME "Water districts"
+            STYLE
+                OUTLINECOLOR 0 0 255
+                COLOR 127 127 255
+                OPACITY 50
+            END
+        END
+    END
+END
