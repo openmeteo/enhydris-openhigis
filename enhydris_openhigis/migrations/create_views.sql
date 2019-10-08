@@ -32,7 +32,12 @@ AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
     INSERT INTO enhydris_gentity (name, code, remarks, geom)
-        VALUES (NEW.name, NEW.code, NEW.remarks, ST_Transform(NEW.geom, 4326))
+        VALUES (
+            NEW.name,
+            COALESCE(NEW.code, ''),
+            COALESCE(NEW.remarks, ''),
+            ST_Transform(NEW.geom, 4326)
+        )
         RETURNING id INTO gentity_id;
     RETURN gentity_id;
 END;
@@ -56,8 +61,8 @@ BEGIN
     UPDATE enhydris_gentity
         SET
             name=NEW.name,
-            code=NEW.code,
-            remarks=NEW.remarks, 
+            code=COALESCE(NEW.code, ''),
+            remarks=COALESCE(NEW.remarks, ''),
             geom=ST_Transform(NEW.geom, 4326)
         WHERE id=OLD.id;
 END;
