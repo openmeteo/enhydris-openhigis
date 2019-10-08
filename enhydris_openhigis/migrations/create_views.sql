@@ -1,4 +1,4 @@
-CREATE SCHEMA IF NOT EXISTS openhigis AUTHORIZATION anton;
+CREATE SCHEMA IF NOT EXISTS openhigis;
 
 SET search_path TO openhigis, public;
 
