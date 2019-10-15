@@ -1,0 +1,27 @@
+{% extends "enhydris/base/main.html" %}
+{% load static %}
+
+{% block basecss %}
+  {{ block.super }}
+  <link href="{% static "css/enhydris-openhigis.css" %}" type="text/css"
+        rel="stylesheet"
+  />
+{% endblock %}
+
+{% block mainjs %}
+  {{ block.super }}
+  <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js"></script>
+  <script src="{% static "js/L.Control.MousePosition.js"%}"></script>
+  {% block map_js %}
+    <script type="text/javascript">
+      {{ map_js | safe }}
+      var openhigis = {
+          ows_url: "{{ ows_url }}"
+      };
+    </script>
+  {% endblock %}
+  <script type="text/javascript" src="{% static "js/betterwms.js" %}">
+  </script>
+  <script type="text/javascript" src="{% static "js/enhydris-openhigis-map.js" %}">
+  </script>
+{% endblock %}

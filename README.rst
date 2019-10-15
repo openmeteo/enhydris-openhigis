@@ -39,8 +39,23 @@ General Public License.
 - Make sure ``enhydris_openhigis`` is in the PYTHONPATH, or link to it
   from the top-level directory of Enhydris.
 
+- Somewhere in the Python path, create file ``urls.py``, with contents
+  such as this::
+
+     from django.urls import include, path
+
+     from enhydris import urls as enhydris_urls
+     from enhydris_openhigis import urls as enhydris_openhigis_urls
+
+
+     urlpatterns = [
+         path("openhigis/", include(enhydris_openhigis_urls)),
+         path("", include(enhydris_urls)),
+     ]
+
 - In the Enhydris ``enhydris_project/settings/local.py`` file, add
-  ``enhydris_openhigis`` to ``INSTALLED_APPS``.
+  ``enhydris_openhigis`` to ``INSTALLED_APPS``, and specify the
+  ``urls.py`` file in ``ROOT_URLCONF``.
 
 - In the Enhydris configuration directory, execute ``python manage.py
   migrate``.
