@@ -79,8 +79,8 @@ CREATE VIEW water_districts
         g.code,
         g.remarks,
         ST_Transform(g.geom, 2100) AS geom,
-        wd.length,
-        wd.area
+        ST_Perimeter(ST_Transform(g.geom, 2100)) / 1000 AS length_km,
+        ST_Area(ST_Transform(g.geom, 2100)) / 1000000 AS area_sqkm
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_waterdistrict wd ON wd.garea_ptr_id = g.id;
@@ -90,8 +90,8 @@ AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
     gentity_id = openhigis.insert_into_garea(NEW);
-    INSERT INTO enhydris_openhigis_waterdistrict (garea_ptr_id, length, area)
-        VALUES (gentity_id, NEW.length, NEW.area);
+    INSERT INTO enhydris_openhigis_waterdistrict (garea_ptr_id)
+        VALUES (gentity_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -103,9 +103,6 @@ CREATE OR REPLACE FUNCTION update_water_districts() RETURNS TRIGGER
 AS $$
 BEGIN
     PERFORM openhigis.update_gentity(OLD, NEW);
-    UPDATE enhydris_openhigis_waterdistrict
-        SET length=NEW.length, area=NEW.area
-        WHERE garea_ptr_id=OLD.id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

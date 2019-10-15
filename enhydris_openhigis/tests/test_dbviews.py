@@ -14,9 +14,9 @@ class WaterDistrictsDataMixin:
             cursor.execute(
                 """
                 INSERT INTO openhigis.water_districts
-                (name, code, remarks, geom, length, area)
+                (name, code, remarks, geom)
                 VALUES
-                ('Attica', '06', 'Hello world', 'SRID=4326;POINT(23 38)', 100, 500)
+                ('Attica', '06', 'Hello world', 'SRID=4326;POINT(23 38)')
                 """
             )
 
@@ -26,8 +26,6 @@ class WaterDistrictsInsertTestCase(WaterDistrictsDataMixin, TestCase):
     expected_name = "Attica"
     expected_code = "06"
     expected_remarks = "Hello world"
-    expected_length = 100
-    expected_area = 500
     expected_x = 23.0
     expected_y = 38.0
 
@@ -43,16 +41,6 @@ class WaterDistrictsInsertTestCase(WaterDistrictsDataMixin, TestCase):
     def test_remarks(self):
         self.assertEqual(
             models.WaterDistrict.objects.first().remarks, self.expected_remarks
-        )
-
-    def test_length(self):
-        self.assertEqual(
-            models.WaterDistrict.objects.first().length, self.expected_length
-        )
-
-    def test_area(self):
-        self.assertAlmostEqual(
-            models.WaterDistrict.objects.first().area, self.expected_area
         )
 
     def test_geom_x(self):
@@ -71,8 +59,6 @@ class WaterDistrictsUpdateTestCase(WaterDistrictsInsertTestCase):
     expected_name = "Epirus"
     expected_code = "08"
     expected_remarks = "Hello planet"
-    expected_length = 200
-    expected_area = 600
     expected_x = 24.0
     expected_y = 39.0
 
@@ -83,7 +69,7 @@ class WaterDistrictsUpdateTestCase(WaterDistrictsInsertTestCase):
                 """
                 UPDATE openhigis.water_districts
                 SET name='Epirus', code='08', remarks='Hello planet',
-                length=200, area=600, geom='SRID=4326;POINT(24 39)'
+                geom='SRID=4326;POINT(24 39)'
                 WHERE name='Attica'
                 """
             )

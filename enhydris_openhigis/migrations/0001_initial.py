@@ -1,9 +1,5 @@
-import os
-
 import django.db.models.deletion
 from django.db import migrations, models
-
-create_views_pathname = os.path.join(os.path.dirname(__file__), "create_views.sql")
 
 
 class Migration(migrations.Migration):
@@ -27,10 +23,9 @@ class Migration(migrations.Migration):
                         to="enhydris.Garea",
                     ),
                 ),
-                ("length", models.FloatField()),
-                ("area", models.FloatField()),
+                ("length", models.FloatField(default=0)),
+                ("area", models.FloatField(default=0)),
             ],
             bases=("enhydris.garea",),
-        ),
-        migrations.RunSQL(open(create_views_pathname).read()),
+        )
     ]
