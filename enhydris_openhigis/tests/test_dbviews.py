@@ -7,13 +7,13 @@ from enhydris import models as enhydris_models
 from enhydris_openhigis import models
 
 
-class WaterDistrictsDataMixin:
+class RiverBasinDistrictsDataMixin:
     def setUp(self):
-        mommy.make(enhydris_models.GareaCategory, id=2, descr="Water district")
+        mommy.make(enhydris_models.GareaCategory, id=2, descr="River basin district")
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO openhigis.water_districts
+                INSERT INTO openhigis.river_basin_districts
                 (name, code, remarks, geom)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=4326;POINT(23 38)')
@@ -21,7 +21,7 @@ class WaterDistrictsDataMixin:
             )
 
 
-class WaterDistrictsInsertTestCase(WaterDistrictsDataMixin, TestCase):
+class RiverBasinDistrictsInsertTestCase(RiverBasinDistrictsDataMixin, TestCase):
     expected_count = 1
     expected_name = "Attica"
     expected_code = "06"
@@ -30,31 +30,35 @@ class WaterDistrictsInsertTestCase(WaterDistrictsDataMixin, TestCase):
     expected_y = 38.0
 
     def test_rowcount(self):
-        self.assertEqual(models.WaterDistrict.objects.count(), self.expected_count)
+        self.assertEqual(models.RiverBasinDistrict.objects.count(), self.expected_count)
 
     def test_name(self):
-        self.assertEqual(models.WaterDistrict.objects.first().name, self.expected_name)
+        self.assertEqual(
+            models.RiverBasinDistrict.objects.first().name, self.expected_name
+        )
 
     def test_code(self):
-        self.assertEqual(models.WaterDistrict.objects.first().code, self.expected_code)
+        self.assertEqual(
+            models.RiverBasinDistrict.objects.first().code, self.expected_code
+        )
 
     def test_remarks(self):
         self.assertEqual(
-            models.WaterDistrict.objects.first().remarks, self.expected_remarks
+            models.RiverBasinDistrict.objects.first().remarks, self.expected_remarks
         )
 
     def test_geom_x(self):
         self.assertAlmostEqual(
-            models.WaterDistrict.objects.first().geom.x, self.expected_x
+            models.RiverBasinDistrict.objects.first().geom.x, self.expected_x
         )
 
     def test_geom_y(self):
         self.assertAlmostEqual(
-            models.WaterDistrict.objects.first().geom.y, self.expected_y
+            models.RiverBasinDistrict.objects.first().geom.y, self.expected_y
         )
 
 
-class WaterDistrictsUpdateTestCase(WaterDistrictsInsertTestCase):
+class RiverBasinDistrictsUpdateTestCase(RiverBasinDistrictsInsertTestCase):
     expected_count = 1
     expected_name = "Epirus"
     expected_code = "08"
@@ -67,7 +71,7 @@ class WaterDistrictsUpdateTestCase(WaterDistrictsInsertTestCase):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                UPDATE openhigis.water_districts
+                UPDATE openhigis.river_basin_districts
                 SET name='Epirus', code='08', remarks='Hello planet',
                 geom='SRID=4326;POINT(24 39)'
                 WHERE name='Attica'
@@ -75,24 +79,26 @@ class WaterDistrictsUpdateTestCase(WaterDistrictsInsertTestCase):
             )
 
 
-class WaterDistrictsDeleteTestCase(WaterDistrictsDataMixin, TestCase):
+class RiverBasinDistrictsDeleteTestCase(RiverBasinDistrictsDataMixin, TestCase):
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
-            cursor.execute("DELETE FROM openhigis.water_districts WHERE name='Attica'")
+            cursor.execute(
+                "DELETE FROM openhigis.river_basin_districts WHERE name='Attica'"
+            )
 
     def test_count(self):
-        self.assertEqual(models.WaterDistrict.objects.count(), 0)
+        self.assertEqual(models.RiverBasinDistrict.objects.count(), 0)
 
 
-class WaterDistrictsSridTestCase(WaterDistrictsDataMixin, TestCase):
+class RiverBasinDistrictsSridTestCase(RiverBasinDistrictsDataMixin, TestCase):
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT ST_X(geom), ST_Y(geom)
-                FROM openhigis.water_districts WHERE name='Attica'
+                FROM openhigis.river_basin_districts WHERE name='Attica'
                 """
             )
             self.row = cursor.fetchone()

@@ -1,5 +1,5 @@
 from enhydris.models import Garea
 
 
-class WaterDistrict(Garea):
+class RiverBasinDistrict(Garea):
     pass

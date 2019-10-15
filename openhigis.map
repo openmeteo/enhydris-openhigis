@@ -96,23 +96,23 @@ MAP
     END
 
     LAYER
-        NAME "WaterDistricts"
+        NAME "RiverBasinDistricts"
         TYPE POLYGON
         CONNECTIONTYPE POSTGIS
         CONNECTION "host=localhost dbname=openmeteo user=mapserver"
         METADATA
-            "wms_title" "Water districts"
-            "wfs_title" "Water districts"
+            "wms_title" "River basin districts"
+            "wfs_title" "River basin districts"
             "gml_include_items" "all"
             "gml_featureid" "id"
         END
         STATUS ON
-        DATA "geom FROM openhigis.water_districts USING UNIQUE id"
+        DATA "geom FROM openhigis.river_basin_districts USING UNIQUE id"
         PROJECTION
             "init=epsg:2100"
         END
         CLASS
-            NAME "Water districts"
+            NAME "River basin districts"
             STYLE
                 OUTLINECOLOR 0 0 255
                 COLOR 127 127 255

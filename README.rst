@@ -17,15 +17,15 @@ also MapServer configuration for serving these layers with WMS and WFS.
 The app is specific to the OpenHI project and several things are
 hardwired in the code.
 
-The app contains geographical models such as ``WaterDistrict``, which
-inherit either ``Gentity`` or ``Garea``. So that gis people can connect
-to the database with a GIS client and update the contents of such
-tables, writeable database views (e.g. ``water_districts``) are created
-in the ``openhigis`` database schema. Except for collecting objects from
-several tables (that use multi-table inheritance) into a single view,
-these views also use SRID=2100, transparently translating to and from
-4326, which is what is actually being used for geometry storage in
-``Gentity``.
+The app contains geographical models such as ``RiverBasinDistrict``,
+which inherit either ``Gentity`` or ``Garea``. So that gis people can
+connect to the database with a GIS client and update the contents of
+such tables, writeable database views (e.g. ``river_basin_districts``)
+are created in the ``openhigis`` database schema. Except for collecting
+objects from several tables (that use multi-table inheritance) into a
+single view, these views also use SRID=2100, transparently translating
+to and from 4326, which is what is actually being used for geometry
+storage in ``Gentity``.
 
 © 2019 National Technical University of Athens
 

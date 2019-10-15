@@ -68,11 +68,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-/* Water districts */
+/* River basin districts */
 
-DROP VIEW IF EXISTS water_districts;
+DROP VIEW IF EXISTS river_basin_districts;
 
-CREATE VIEW water_districts
+CREATE VIEW river_basin_districts
     AS SELECT
         g.id,
         g.name,
@@ -83,23 +83,25 @@ CREATE VIEW water_districts
         ST_Area(ST_Transform(g.geom, 2100)) / 1000000 AS area_sqkm
     FROM
         enhydris_gentity g
-        INNER JOIN enhydris_openhigis_waterdistrict wd ON wd.garea_ptr_id = g.id;
+        INNER JOIN enhydris_openhigis_riverbasindistrict wd
+        ON wd.garea_ptr_id = g.id;
 
-CREATE OR REPLACE FUNCTION insert_into_water_districts() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION insert_into_river_basin_districts() RETURNS TRIGGER
 AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
     gentity_id = openhigis.insert_into_garea(NEW);
-    INSERT INTO enhydris_openhigis_waterdistrict (garea_ptr_id)
+    INSERT INTO enhydris_openhigis_riverbasindistrict (garea_ptr_id)
         VALUES (gentity_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER water_districts_insert INSTEAD OF INSERT ON water_districts
-    FOR EACH ROW EXECUTE PROCEDURE insert_into_water_districts();
+CREATE TRIGGER river_basin_districts_insert
+    INSTEAD OF INSERT ON river_basin_districts
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_river_basin_districts();
 
-CREATE OR REPLACE FUNCTION update_water_districts() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION update_river_basin_districts() RETURNS TRIGGER
 AS $$
 BEGIN
     PERFORM openhigis.update_gentity(OLD, NEW);
@@ -107,20 +109,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER water_districts_update INSTEAD OF UPDATE ON water_districts
-    FOR EACH ROW EXECUTE PROCEDURE update_water_districts();
+CREATE TRIGGER river_basin_districts_update
+    INSTEAD OF UPDATE ON river_basin_districts
+    FOR EACH ROW EXECUTE PROCEDURE update_river_basin_districts();
 
-CREATE OR REPLACE FUNCTION delete_water_districts()
+CREATE OR REPLACE FUNCTION delete_river_basin_districts()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    DELETE FROM enhydris_openhigis_waterdistrict WHERE garea_ptr_id=OLD.id;
+    DELETE FROM enhydris_openhigis_riverbasindistrict WHERE garea_ptr_id=OLD.id;
     DELETE FROM enhydris_garea WHERE gentity_ptr_id=OLD.id;
     DELETE FROM enhydris_gentity WHERE id=OLD.id;
     RETURN OLD;
 END;
 $$;
 
-CREATE TRIGGER water_districts_delete INSTEAD OF DELETE ON water_districts
-    FOR EACH ROW EXECUTE PROCEDURE delete_water_districts();
+CREATE TRIGGER river_basin_districts_delete
+    INSTEAD OF DELETE ON river_basin_districts
+    FOR EACH ROW EXECUTE PROCEDURE delete_river_basin_districts();
