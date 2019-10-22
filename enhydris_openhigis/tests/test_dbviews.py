@@ -13,10 +13,10 @@ class RiverBasinDistrictsDataMixin:
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO openhigis.river_basin_districts
-                (name, code, remarks, geom)
+                INSERT INTO openhigis.RiverBasinDistricts
+                (geographicalName, hydroId, remarks, geometry)
                 VALUES
-                ('Attica', '06', 'Hello world', 'SRID=4326;POINT(23 38)')
+                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)')
                 """
             )
 
@@ -26,8 +26,8 @@ class RiverBasinDistrictsInsertTestCase(RiverBasinDistrictsDataMixin, TestCase):
     expected_name = "Attica"
     expected_code = "06"
     expected_remarks = "Hello world"
-    expected_x = 23.0
-    expected_y = 38.0
+    expected_x = 24.00166
+    expected_y = 36.14732
 
     def test_rowcount(self):
         self.assertEqual(models.RiverBasinDistrict.objects.count(), self.expected_count)
@@ -49,12 +49,12 @@ class RiverBasinDistrictsInsertTestCase(RiverBasinDistrictsDataMixin, TestCase):
 
     def test_geom_x(self):
         self.assertAlmostEqual(
-            models.RiverBasinDistrict.objects.first().geom.x, self.expected_x
+            models.RiverBasinDistrict.objects.first().geom.x, self.expected_x, places=5
         )
 
     def test_geom_y(self):
         self.assertAlmostEqual(
-            models.RiverBasinDistrict.objects.first().geom.y, self.expected_y
+            models.RiverBasinDistrict.objects.first().geom.y, self.expected_y, places=5
         )
 
 
@@ -63,18 +63,18 @@ class RiverBasinDistrictsUpdateTestCase(RiverBasinDistrictsInsertTestCase):
     expected_name = "Epirus"
     expected_code = "08"
     expected_remarks = "Hello planet"
-    expected_x = 24.0
-    expected_y = 39.0
+    expected_x = 24.59318
+    expected_y = 40.65191
 
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                UPDATE openhigis.river_basin_districts
-                SET name='Epirus', code='08', remarks='Hello planet',
-                geom='SRID=4326;POINT(24 39)'
-                WHERE name='Attica'
+                UPDATE openhigis.RiverBasinDistricts
+                SET geographicalName='Epirus', hydroId='08', remarks='Hello planet',
+                geometry='SRID=2100;POINT(550000 4500000)'
+                WHERE geographicalName='Attica'
                 """
             )
 
@@ -84,7 +84,10 @@ class RiverBasinDistrictsDeleteTestCase(RiverBasinDistrictsDataMixin, TestCase):
         super().setUp()
         with connection.cursor() as cursor:
             cursor.execute(
-                "DELETE FROM openhigis.river_basin_districts WHERE name='Attica'"
+                """
+                DELETE FROM openhigis.RiverBasinDistricts
+                WHERE geographicalName='Attica'
+                """
             )
 
     def test_count(self):
@@ -97,14 +100,14 @@ class RiverBasinDistrictsSridTestCase(RiverBasinDistrictsDataMixin, TestCase):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                SELECT ST_X(geom), ST_Y(geom)
-                FROM openhigis.river_basin_districts WHERE name='Attica'
+                SELECT ST_X(geometry), ST_Y(geometry)
+                FROM openhigis.RiverBasinDistricts WHERE geographicalName='Attica'
                 """
             )
             self.row = cursor.fetchone()
 
     def test_x(self):
-        self.assertAlmostEqual(self.row[0], 412051.58, places=2)
+        self.assertAlmostEqual(self.row[0], 500000.00, places=2)
 
     def test_y(self):
-        self.assertAlmostEqual(self.row[1], 4205998.82, places=2)
+        self.assertAlmostEqual(self.row[1], 4000000.00, places=2)

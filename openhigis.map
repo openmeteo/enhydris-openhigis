@@ -107,7 +107,7 @@ MAP
             "gml_featureid" "id"
         END
         STATUS ON
-        DATA "geom FROM openhigis.river_basin_districts USING UNIQUE id"
+        DATA "geometry FROM openhigis.RiverBasinDistricts USING UNIQUE id"
         PROJECTION
             "init=epsg:2100"
         END

@@ -20,7 +20,7 @@ hardwired in the code.
 The app contains geographical models such as ``RiverBasinDistrict``,
 which inherit either ``Gentity`` or ``Garea``. So that gis people can
 connect to the database with a GIS client and update the contents of
-such tables, writeable database views (e.g. ``river_basin_districts``)
+such tables, writeable database views (e.g. ``RiverBasinDistricts``)
 are created in the ``openhigis`` database schema. Except for collecting
 objects from several tables (that use multi-table inheritance) into a
 single view, these views also use SRID=2100, transparently translating
