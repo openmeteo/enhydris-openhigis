@@ -7,21 +7,23 @@ from enhydris import models as enhydris_models
 from enhydris_openhigis import models
 
 
-class RiverBasinDistrictsDataMixin:
+class DbviewDataMixin:
     def setUp(self):
         mommy.make(enhydris_models.GareaCategory, id=2, descr="River basin district")
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO openhigis.RiverBasinDistricts
+                INSERT INTO openhigis.{}
                 (geographicalName, hydroId, remarks, geometry)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)')
-                """
+                """.format(
+                    self.view_name
+                )
             )
 
 
-class RiverBasinDistrictsInsertTestCase(RiverBasinDistrictsDataMixin, TestCase):
+class DbviewInsertTestCaseBase(DbviewDataMixin):
     expected_count = 1
     expected_name = "Attica"
     expected_code = "06"
@@ -30,35 +32,29 @@ class RiverBasinDistrictsInsertTestCase(RiverBasinDistrictsDataMixin, TestCase):
     expected_y = 36.14732
 
     def test_rowcount(self):
-        self.assertEqual(models.RiverBasinDistrict.objects.count(), self.expected_count)
+        self.assertEqual(self.model.objects.count(), self.expected_count)
 
     def test_name(self):
-        self.assertEqual(
-            models.RiverBasinDistrict.objects.first().name, self.expected_name
-        )
+        self.assertEqual(self.model.objects.first().name, self.expected_name)
 
     def test_code(self):
-        self.assertEqual(
-            models.RiverBasinDistrict.objects.first().code, self.expected_code
-        )
+        self.assertEqual(self.model.objects.first().code, self.expected_code)
 
     def test_remarks(self):
-        self.assertEqual(
-            models.RiverBasinDistrict.objects.first().remarks, self.expected_remarks
-        )
+        self.assertEqual(self.model.objects.first().remarks, self.expected_remarks)
 
     def test_geom_x(self):
         self.assertAlmostEqual(
-            models.RiverBasinDistrict.objects.first().geom.x, self.expected_x, places=5
+            self.model.objects.first().geom.x, self.expected_x, places=5
         )
 
     def test_geom_y(self):
         self.assertAlmostEqual(
-            models.RiverBasinDistrict.objects.first().geom.y, self.expected_y, places=5
+            self.model.objects.first().geom.y, self.expected_y, places=5
         )
 
 
-class RiverBasinDistrictsUpdateTestCase(RiverBasinDistrictsInsertTestCase):
+class DbviewUpdateTestCaseBase(DbviewInsertTestCaseBase):
     expected_count = 1
     expected_name = "Epirus"
     expected_code = "08"
@@ -71,38 +67,44 @@ class RiverBasinDistrictsUpdateTestCase(RiverBasinDistrictsInsertTestCase):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                UPDATE openhigis.RiverBasinDistricts
+                UPDATE openhigis.{}
                 SET geographicalName='Epirus', hydroId='08', remarks='Hello planet',
                 geometry='SRID=2100;POINT(550000 4500000)'
                 WHERE geographicalName='Attica'
-                """
+                """.format(
+                    self.view_name
+                )
             )
 
 
-class RiverBasinDistrictsDeleteTestCase(RiverBasinDistrictsDataMixin, TestCase):
+class DbviewDeleteTestCaseBase(DbviewDataMixin):
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                DELETE FROM openhigis.RiverBasinDistricts
+                DELETE FROM openhigis.{}
                 WHERE geographicalName='Attica'
-                """
+                """.format(
+                    self.view_name
+                )
             )
 
     def test_count(self):
-        self.assertEqual(models.RiverBasinDistrict.objects.count(), 0)
+        self.assertEqual(self.model.objects.count(), 0)
 
 
-class RiverBasinDistrictsSridTestCase(RiverBasinDistrictsDataMixin, TestCase):
+class DbviewSridTestCaseBase(DbviewDataMixin):
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT ST_X(geometry), ST_Y(geometry)
-                FROM openhigis.RiverBasinDistricts WHERE geographicalName='Attica'
-                """
+                FROM openhigis.{} WHERE geographicalName='Attica'
+                """.format(
+                    self.view_name
+                )
             )
             self.row = cursor.fetchone()
 
@@ -111,3 +113,22 @@ class RiverBasinDistrictsSridTestCase(RiverBasinDistrictsDataMixin, TestCase):
 
     def test_y(self):
         self.assertAlmostEqual(self.row[1], 4000000.00, places=2)
+
+
+dbviews = [
+    {"view_name": "RiverBasinDistricts", "model": models.RiverBasinDistrict},
+    {"view_name": "RiverBasins", "model": models.RiverBasin},
+]
+
+
+def create_dynamic_test_case(dbview, base_class):
+    testcasename = "{}{}".format(dbview["view_name"], base_class.__name__)
+    testcase = type(testcasename, (base_class, TestCase), dbview)
+    globals()[testcasename] = testcase
+
+
+for dbview in dbviews:
+    create_dynamic_test_case(dbview, DbviewInsertTestCaseBase)
+    create_dynamic_test_case(dbview, DbviewUpdateTestCaseBase)
+    create_dynamic_test_case(dbview, DbviewDeleteTestCaseBase)
+    create_dynamic_test_case(dbview, DbviewSridTestCaseBase)

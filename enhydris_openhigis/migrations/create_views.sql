@@ -146,6 +146,70 @@ CREATE TRIGGER RiverBasinDistricts_delete
     FOR EACH ROW EXECUTE PROCEDURE delete_RiverBasinDistricts();
 
 
+/* River basins */
+
+DROP VIEW IF EXISTS RiverBasins;
+
+CREATE VIEW RiverBasins
+    AS SELECT
+        g.id,
+        g.name AS geographicalName,
+        g.code AS hydroId,
+        g.remarks,
+        rb.geom2100 AS geometry,
+        ST_Perimeter(rb.geom2100) / 1000 AS length_km,
+        ST_Area(rb.geom2100) / 1000000 AS area_sqkm
+    FROM
+        enhydris_gentity g
+        INNER JOIN enhydris_openhigis_riverbasin rb
+        ON rb.garea_ptr_id = g.id;
+
+CREATE OR REPLACE FUNCTION insert_into_RiverBasins() RETURNS TRIGGER
+AS $$
+DECLARE gentity_id INTEGER;
+BEGIN
+    gentity_id = openhigis.insert_into_garea(NEW);
+    INSERT INTO enhydris_openhigis_riverbasin (garea_ptr_id, geom2100)
+        VALUES (gentity_id, NEW.geometry);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER RiverBasins_insert
+    INSTEAD OF INSERT ON RiverBasins
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_RiverBasins();
+
+CREATE OR REPLACE FUNCTION update_RiverBasins() RETURNS TRIGGER
+AS $$
+BEGIN
+    PERFORM openhigis.update_gentity(OLD, NEW);
+    UPDATE enhydris_openhigis_riverbasin
+    SET geom2100=NEW.geometry WHERE garea_ptr_id=OLD.id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER RiverBasins_update
+    INSTEAD OF UPDATE ON RiverBasins
+    FOR EACH ROW EXECUTE PROCEDURE update_RiverBasins();
+
+CREATE OR REPLACE FUNCTION delete_RiverBasins()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DELETE FROM enhydris_openhigis_riverbasin WHERE garea_ptr_id=OLD.id;
+    DELETE FROM enhydris_garea WHERE gentity_ptr_id=OLD.id;
+    DELETE FROM enhydris_gentity WHERE id=OLD.id;
+    RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER RiverBasins_delete
+    INSTEAD OF DELETE ON RiverBasins
+    FOR EACH ROW EXECUTE PROCEDURE delete_RiverBasins();
+
+
 /* Give read permissions to mapserver */
 
 GRANT USAGE ON SCHEMA openhigis TO mapserver;

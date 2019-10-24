@@ -27,16 +27,17 @@ openhigis.map.setUpBaseLayers = function() {
 };
 
 openhigis.map.setUpOverlayLayers = function() {
-    this.addRiverBasinDistricts();
+    this.addOpenhiLayer("RiverBasinDistricts", "Υδατικά διαμερίσματα");
+    this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής");
 };
 
-openhigis.map.addRiverBasinDistricts = function() {
+openhigis.map.addOpenhiLayer = function(name, legend) {
     var layer = L.tileLayer.betterWms(openhigis.ows_url, {
-        layers: "RiverBasinDistricts",
+        layers: name,
         format: "image/png",
         transparent: true,
     });
-    this.layersControl.addOverlay(layer, "Υδατικά διαμερίσματα");
+    this.layersControl.addOverlay(layer, legend);
 };
 
 openhigis.map.setUp();

@@ -37,3 +37,7 @@ class Station(EnhydrisStation, GGRS87Mixin):
 
 class RiverBasinDistrict(Garea, GGRS87Mixin):
     pass
+
+
+class RiverBasin(Garea, GGRS87Mixin):
+    pass

@@ -111,9 +111,36 @@ MAP
         PROJECTION
             "init=epsg:2100"
         END
-        TEMPLATE "wmspopup-riverbasindistricts.html"
+        TEMPLATE "wmspopup-general.html"
         CLASS
             NAME "River basin districts"
+            STYLE
+                OUTLINECOLOR 0 0 255
+                COLOR 127 127 255
+                OPACITY 50
+            END
+        END
+    END
+
+    LAYER
+        NAME "RiverBasins"
+        TYPE POLYGON
+        CONNECTIONTYPE POSTGIS
+        CONNECTION "host=localhost dbname=openmeteo user=mapserver"
+        METADATA
+            "wms_title" "River basins"
+            "wfs_title" "River basins"
+            "gml_include_items" "all"
+            "gml_featureid" "id"
+        END
+        STATUS ON
+        DATA "geometry FROM openhigis.RiverBasins USING UNIQUE id USING SRID=2100"
+        PROJECTION
+            "init=epsg:2100"
+        END
+        TEMPLATE "wmspopup-general.html"
+        CLASS
+            NAME "River basins"
             STYLE
                 OUTLINECOLOR 0 0 255
                 COLOR 127 127 255
