@@ -148,4 +148,31 @@ MAP
             END
         END
     END
+
+    LAYER
+        NAME "DrainageBasins"
+        TYPE POLYGON
+        CONNECTIONTYPE POSTGIS
+        CONNECTION "host=localhost dbname=openmeteo user=mapserver"
+        METADATA
+            "wms_title" "Drainage basins"
+            "wfs_title" "Drainage basins"
+            "gml_include_items" "all"
+            "gml_featureid" "id"
+        END
+        STATUS ON
+        DATA "geometry FROM openhigis.DrainageBasins USING UNIQUE id USING SRID=2100"
+        PROJECTION
+            "init=epsg:2100"
+        END
+        TEMPLATE "wmspopup-general.html"
+        CLASS
+            NAME "Drainage basins"
+            STYLE
+                OUTLINECOLOR 0 0 255
+                COLOR 127 127 255
+                OPACITY 50
+            END
+        END
+    END
 END

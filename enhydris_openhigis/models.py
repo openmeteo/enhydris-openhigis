@@ -31,6 +31,18 @@ class GGRS87Mixin(models.Model):
         abstract = True
 
 
+class HydroOrderCodeMixin(models.Model):
+    """INSPIRE data specification on hydrography, 5.5.2.2.1 (p. 57).
+    """
+
+    hydro_order = models.CharField(max_length=50, blank=True)
+    hydro_order_scheme = models.CharField(max_length=50, blank=True)
+    hydro_order_scope = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        abstract = True
+
+
 class Station(EnhydrisStation, GGRS87Mixin):
     pass
 
@@ -39,5 +51,13 @@ class RiverBasinDistrict(Garea, GGRS87Mixin):
     pass
 
 
-class RiverBasin(Garea, GGRS87Mixin):
+class DrainageBasin(Garea, GGRS87Mixin, HydroOrderCodeMixin):
+    man_made = models.BooleanField(blank=True, null=True)
+    parent = models.ForeignKey("self", null=True, on_delete=models.SET_NULL)
+    total_area = models.FloatField(blank=True, null=True)
+    mean_slope = models.FloatField(blank=True, null=True)
+    mean_elevation = models.FloatField(blank=True, null=True)
+
+
+class RiverBasin(DrainageBasin):
     pass
