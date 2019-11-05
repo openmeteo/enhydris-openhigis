@@ -68,7 +68,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION update_gentity(OLD ANYELEMENT, NEW ANYELEMENT)
+CREATE OR REPLACE FUNCTION update_gentity(gentity_id INTEGER, OLD ANYELEMENT, NEW ANYELEMENT)
 RETURNS void
 AS $$
 BEGIN
@@ -78,7 +78,7 @@ BEGIN
             code=COALESCE(NEW.hydroId, ''),
             remarks=COALESCE(NEW.remarks, ''),
             geom=ST_Transform(NEW.geometry, 4326)
-        WHERE id=OLD.id;
+        WHERE id=gentity_id;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -88,7 +88,7 @@ DROP VIEW IF EXISTS RiverBasinDistricts;
 
 CREATE VIEW RiverBasinDistricts
     AS SELECT
-        g.id,
+        rbd.imported_id AS objectId,
         g.name AS geographicalName,
         g.code AS hydroId,
         g.remarks,
@@ -105,8 +105,9 @@ AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
     gentity_id = openhigis.insert_into_garea(NEW);
-    INSERT INTO enhydris_openhigis_riverbasindistrict (garea_ptr_id, geom2100)
-        VALUES (gentity_id, NEW.geometry);
+    INSERT INTO enhydris_openhigis_riverbasindistrict
+        (garea_ptr_id, geom2100, imported_id)
+        VALUES (gentity_id, NEW.geometry, NEW.objectId);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -117,10 +118,14 @@ CREATE TRIGGER RiverBasinDistricts_insert
 
 CREATE OR REPLACE FUNCTION update_RiverBasinDistricts() RETURNS TRIGGER
 AS $$
+DECLARE gentity_id INTEGER;
 BEGIN
-    PERFORM openhigis.update_gentity(OLD, NEW);
+    SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_riverbasindistrict
+        WHERE imported_id=OLD.objectId;
+    PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     UPDATE enhydris_openhigis_riverbasindistrict
-    SET geom2100=NEW.geometry WHERE garea_ptr_id=OLD.id;
+    SET geom2100=NEW.geometry
+    WHERE imported_id=OLD.objectId;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -133,10 +138,13 @@ CREATE OR REPLACE FUNCTION delete_RiverBasinDistricts()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
+DECLARE gentity_id INTEGER;
 BEGIN
-    DELETE FROM enhydris_openhigis_riverbasindistrict WHERE garea_ptr_id=OLD.id;
-    DELETE FROM enhydris_garea WHERE gentity_ptr_id=OLD.id;
-    DELETE FROM enhydris_gentity WHERE id=OLD.id;
+    SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_riverbasindistrict
+        WHERE imported_id=OLD.objectId;
+    DELETE FROM enhydris_openhigis_riverbasindistrict WHERE garea_ptr_id=gentity_id;
+    DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
+    DELETE FROM enhydris_gentity WHERE id=gentity_id;
     RETURN OLD;
 END;
 $$;
@@ -151,13 +159,13 @@ DROP VIEW IF EXISTS DrainageBasins;
 
 CREATE VIEW DrainageBasins
     AS SELECT
-        g.id,
+        drb.imported_id as objectId,
         g.name AS geographicalName,
         g.code AS hydroId,
         g.last_modified AS beginLifespanVersion,
         g.remarks,
         drb.geom2100 AS geometry,
-        drb.parent_id AS parentBasin,
+        parentbasin.imported_id AS parentBasin,
         CASE WHEN drb.man_made IS NULL THEN ''
              WHEN drb.man_made THEN 'manMade'
              ELSE 'natural'
@@ -172,7 +180,9 @@ CREATE VIEW DrainageBasins
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_drainagebasin drb
-        ON drb.garea_ptr_id = g.id;
+            ON drb.garea_ptr_id = g.id
+        LEFT JOIN enhydris_openhigis_drainagebasin parentbasin
+            ON drb.parent_id = parentbasin.garea_ptr_id;
 
 CREATE OR REPLACE FUNCTION insert_into_DrainageBasins() RETURNS TRIGGER
 AS $$
@@ -182,12 +192,12 @@ BEGIN
     INSERT INTO enhydris_openhigis_drainagebasin
         (garea_ptr_id, geom2100, parent_id, man_made, hydro_order,
         hydro_order_scheme, hydro_order_scope, total_area, mean_slope,
-        mean_elevation)
+        mean_elevation, imported_id)
         VALUES (gentity_id, NEW.geometry, NEW.parentBasin,
             NEW.origin = 'manMade', COALESCE(NEW.basinOrder, ''),
             COALESCE(NEW.basinOrderScheme, ''),
             COALESCE(NEW.basinOrderScope, ''), NEW.totalArea, NEW.meanSlope,
-            NEW.meanElevation
+            NEW.meanElevation, NEW.objectId
         );
     RETURN NEW;
 END;
@@ -199,8 +209,11 @@ CREATE TRIGGER DrainageBasins_insert
 
 CREATE OR REPLACE FUNCTION update_DrainageBasins() RETURNS TRIGGER
 AS $$
+DECLARE gentity_id INTEGER;
 BEGIN
-    PERFORM openhigis.update_gentity(OLD, NEW);
+    SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_drainagebasin
+        WHERE imported_id=OLD.objectId;
+    PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     UPDATE enhydris_openhigis_drainagebasin
     SET
         geom2100=NEW.geometry,
@@ -212,7 +225,7 @@ BEGIN
         total_area=NEW.totalArea,
         mean_slope=NEW.meanSlope,
         mean_elevation=NEW.meanElevation
-        WHERE garea_ptr_id=OLD.id;
+        WHERE imported_id=OLD.objectId;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -225,10 +238,13 @@ CREATE OR REPLACE FUNCTION delete_DrainageBasins()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
+DECLARE gentity_id INTEGER;
 BEGIN
-    DELETE FROM enhydris_openhigis_drainagebasin WHERE garea_ptr_id=OLD.id;
-    DELETE FROM enhydris_garea WHERE gentity_ptr_id=OLD.id;
-    DELETE FROM enhydris_gentity WHERE id=OLD.id;
+    SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_drainagebasin
+        WHERE imported_id=OLD.objectId;
+    DELETE FROM enhydris_openhigis_drainagebasin WHERE garea_ptr_id=gentity_id;
+    DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
+    DELETE FROM enhydris_gentity WHERE id=gentity_id;
     RETURN OLD;
 END;
 $$;
@@ -243,7 +259,7 @@ DROP VIEW IF EXISTS RiverBasins;
 
 CREATE VIEW RiverBasins
     AS SELECT
-        g.id,
+        drb.imported_id AS objectId,
         g.name AS geographicalName,
         g.code AS hydroId,
         g.last_modified AS beginLifespanVersion,
@@ -276,12 +292,12 @@ BEGIN
     INSERT INTO enhydris_openhigis_drainagebasin
         (garea_ptr_id, geom2100, parent_id, man_made, hydro_order,
         hydro_order_scheme, hydro_order_scope, total_area, mean_slope,
-        mean_elevation)
+        mean_elevation, imported_id)
         VALUES (gentity_id, NEW.geometry, NEW.parentBasin,
             NEW.origin = 'manMade', COALESCE(NEW.basinOrder, ''),
             COALESCE(NEW.basinOrderScheme, ''),
             COALESCE(NEW.basinOrderScope, ''), NEW.totalArea, NEW.meanSlope,
-            NEW.meanElevation
+            NEW.meanElevation, NEW.objectId
         );
     INSERT INTO enhydris_openhigis_riverbasin(drainagebasin_ptr_id)
         VALUES (gentity_id);
@@ -301,11 +317,14 @@ CREATE OR REPLACE FUNCTION delete_RiverBasins()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
+DECLARE gentity_id INTEGER;
 BEGIN
-    DELETE FROM enhydris_openhigis_riverbasin WHERE drainagebasin_ptr_id=OLD.id;
-    DELETE FROM enhydris_openhigis_drainagebasin WHERE garea_ptr_id=OLD.id;
-    DELETE FROM enhydris_garea WHERE gentity_ptr_id=OLD.id;
-    DELETE FROM enhydris_gentity WHERE id=OLD.id;
+    SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_drainagebasin
+        WHERE imported_id=OLD.objectId;
+    DELETE FROM enhydris_openhigis_riverbasin WHERE drainagebasin_ptr_id=gentity_id;
+    DELETE FROM enhydris_openhigis_drainagebasin WHERE garea_ptr_id=gentity_id;
+    DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
+    DELETE FROM enhydris_gentity WHERE id=gentity_id;
     RETURN OLD;
 END;
 $$;

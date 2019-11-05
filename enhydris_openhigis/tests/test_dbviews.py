@@ -76,9 +76,9 @@ class RiverBasinDistrictsSetupInitialRowMixin:
             cursor.execute(
                 """
                 INSERT INTO openhigis.RiverBasinDistricts
-                (geographicalName, hydroId, remarks, geometry)
+                (geographicalName, hydroId, remarks, geometry, objectId)
                 VALUES
-                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)')
+                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1852)
                 """
             )
 
@@ -143,10 +143,11 @@ class DrainageBasinsSetupInitialRowMixin:
                 """
                 INSERT INTO openhigis.{}
                 (geographicalName, hydroId, remarks, geometry, origin, basinOrder,
-                basinOrderScheme, basinOrderScope, totalArea, meanSlope, meanElevation)
+                basinOrderScheme, basinOrderScope, totalArea, meanSlope, meanElevation,
+                objectId)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200)
+                'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 1852)
                 """.format(
                     self.view_name
                 )

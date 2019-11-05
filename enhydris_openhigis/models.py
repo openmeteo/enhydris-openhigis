@@ -4,6 +4,24 @@ from enhydris.models import Garea
 from enhydris.models import Station as EnhydrisStation
 
 
+class ImportedIdMixin(models.Model):
+    """Extra id field.
+
+    Gentities already have an id, which is given internally by Enhydris. This is
+    insufficient for geographical data, which are imported in PostGIS from external
+    files. Relationships already exist in these external files, and they are based on
+    an id. It's hard to import these relationships if that id is thrown away, so we
+    keep it.
+
+    However, after the import is complete, this id is generally not necessary.
+    """
+
+    imported_id = models.IntegerField(unique=True)
+
+    class Meta:
+        abstract = True
+
+
 class GGRS87Mixin(models.Model):
     """Geometry field in GGRS87.
 
@@ -47,11 +65,11 @@ class Station(EnhydrisStation, GGRS87Mixin):
     pass
 
 
-class RiverBasinDistrict(Garea, GGRS87Mixin):
+class RiverBasinDistrict(Garea, GGRS87Mixin, ImportedIdMixin):
     pass
 
 
-class DrainageBasin(Garea, GGRS87Mixin, HydroOrderCodeMixin):
+class DrainageBasin(Garea, GGRS87Mixin, HydroOrderCodeMixin, ImportedIdMixin):
     man_made = models.BooleanField(blank=True, null=True)
     parent = models.ForeignKey("self", null=True, on_delete=models.SET_NULL)
     total_area = models.FloatField(blank=True, null=True)
