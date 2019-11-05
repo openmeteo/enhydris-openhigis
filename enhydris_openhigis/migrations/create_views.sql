@@ -88,6 +88,7 @@ DROP VIEW IF EXISTS RiverBasinDistricts;
 
 CREATE VIEW RiverBasinDistricts
     AS SELECT
+        g.id,
         rbd.imported_id AS objectId,
         g.name AS geographicalName,
         g.code AS hydroId,
@@ -159,6 +160,7 @@ DROP VIEW IF EXISTS DrainageBasins;
 
 CREATE VIEW DrainageBasins
     AS SELECT
+        g.id,
         drb.imported_id as objectId,
         g.name AS geographicalName,
         g.code AS hydroId,
@@ -259,6 +261,7 @@ DROP VIEW IF EXISTS RiverBasins;
 
 CREATE VIEW RiverBasins
     AS SELECT
+        g.id,
         drb.imported_id AS objectId,
         g.name AS geographicalName,
         g.code AS hydroId,
