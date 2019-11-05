@@ -138,7 +138,7 @@ MAP
         PROJECTION
             "init=epsg:2100"
         END
-        TEMPLATE "wmspopup-general.html"
+        TEMPLATE "wmspopup-basin.html"
         CLASS
             NAME "River basins"
             STYLE
@@ -165,7 +165,7 @@ MAP
         PROJECTION
             "init=epsg:2100"
         END
-        TEMPLATE "wmspopup-general.html"
+        TEMPLATE "wmspopup-basin.html"
         CLASS
             NAME "Drainage basins"
             STYLE
