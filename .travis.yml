@@ -28,6 +28,7 @@ before_script:
  - psql -U postgres -c "create extension postgis"
  - psql -U postgres -c "create database openmeteo"
  - psql -U postgres -c "create user mapserver"
+ - psql -U postgres -c "create user anton"
  - cp .travis-settings.py ../enhydris/enhydris_project/settings/local.py
  - cd ../enhydris
  - ln -s ../enhydris-openhigis/enhydris_openhigis .

@@ -333,7 +333,17 @@ CREATE TRIGGER RiverBasins_delete
     INSTEAD OF DELETE ON RiverBasins
     FOR EACH ROW EXECUTE PROCEDURE delete_RiverBasins();
 
-/* Give read permissions to mapserver */
+/* Give permissions */
 
-GRANT USAGE ON SCHEMA openhigis TO mapserver;
+GRANT USAGE ON SCHEMA openhigis TO mapserver, anton;
 GRANT SELECT ON ALL TABLES IN SCHEMA openhigis TO mapserver;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA openhigis TO anton;
+GRANT SELECT, INSERT, UPDATE, DELETE
+    ON
+    enhydris_openhigis_riverbasin,
+    enhydris_openhigis_drainagebasin,
+    enhydris_openhigis_riverbasindistrict,
+    enhydris_openhigis_station,
+    enhydris_garea,
+    enhydris_gentity
+    TO anton;
