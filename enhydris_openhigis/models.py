@@ -69,13 +69,39 @@ class RiverBasinDistrict(Garea, GGRS87Mixin, ImportedIdMixin):
     pass
 
 
-class DrainageBasin(Garea, GGRS87Mixin, HydroOrderCodeMixin, ImportedIdMixin):
+class BasinMixin(models.Model):
+    """Base class for drainage basins and river basins.
+
+    INSPIRE uses the term "drainage basin" both for river basins and subbasins; a river
+    basin is thus a subclass of drainage basin. However, it doesn't seem to provide an
+    easy way to refer to subbasins, i.e. those drainage basins that are not river
+    basins.
+
+    Here we use "drainage basin" for sub-basins only. River basins and drainage basins
+    have almost identical attributes (one exception is that drainage basins have a
+    river_basin foreign key). This class (BasinMixin) contains common fields.
+    """
+
     man_made = models.BooleanField(blank=True, null=True)
-    parent = models.ForeignKey("self", null=True, on_delete=models.SET_NULL)
     total_area = models.FloatField(blank=True, null=True)
     mean_slope = models.FloatField(blank=True, null=True)
     mean_elevation = models.FloatField(blank=True, null=True)
 
+    class Meta:
+        abstract = True
 
-class RiverBasin(DrainageBasin):
+
+class RiverBasin(Garea, GGRS87Mixin, HydroOrderCodeMixin, ImportedIdMixin, BasinMixin):
     pass
+
+
+class DrainageBasin(
+    Garea, GGRS87Mixin, HydroOrderCodeMixin, ImportedIdMixin, BasinMixin
+):
+    """A subbasin.
+
+    We use the term "DrainageBasin" differently from INSPIRE. Read the "BasinMixin"
+    above for an explanation.
+    """
+
+    river_basin = models.ForeignKey(RiverBasin, on_delete=models.CASCADE)

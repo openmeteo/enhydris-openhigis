@@ -1,9 +1,6 @@
 from django.db import connection
 from django.test import TestCase
 
-from model_mommy import mommy
-
-from enhydris import models as enhydris_models
 from enhydris_openhigis import models
 
 
@@ -71,7 +68,6 @@ class SridMixin:
 
 class RiverBasinDistrictsSetupInitialRowMixin:
     def setUp(self):
-        mommy.make(enhydris_models.GareaCategory, id=2, descr="River basins")
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -135,26 +131,40 @@ class RiverBasinDistrictsSridTestCase(
     view_name = "RiverBasinDistricts"
 
 
-class DrainageBasinsSetupInitialRowMixin:
+class RiverBasinsSetupInitialRowMixin:
     def setUp(self):
-        mommy.make(enhydris_models.GareaCategory, id=2, descr="Drainage basins")
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO openhigis.{}
+                INSERT INTO openhigis.RiverBasins
                 (geographicalName, hydroId, remarks, geometry, origin, basinOrder,
                 basinOrderScheme, basinOrderScope, totalArea, meanSlope, meanElevation,
                 objectId)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 1852)
-                """.format(
-                    self.view_name
-                )
+                'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 1851)
+                """
             )
 
 
-class DrainageBasinsAdditionalTestsMixin:
+class DrainageBasinsSetupInitialRowMixin(RiverBasinsSetupInitialRowMixin):
+    def setUp(self):
+        super().setUp()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.DrainageBasins
+                (geographicalName, hydroId, remarks, geometry, origin, basinOrder,
+                basinOrderScheme, basinOrderScope, totalArea, meanSlope, meanElevation,
+                objectId, riverBasin)
+                VALUES
+                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
+                'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 1852, 1851)
+                """
+            )
+
+
+class BasinsAdditionalTestsMixin:
     def test_man_made(self):
         self.assertEqual(self.model.objects.first().man_made, self.expected_man_made)
 
@@ -194,7 +204,7 @@ class DrainageBasinsAdditionalTestsMixin:
 class DrainageBasinsInsertTestCase(
     EssentialTestsMixin,
     DrainageBasinsSetupInitialRowMixin,
-    DrainageBasinsAdditionalTestsMixin,
+    BasinsAdditionalTestsMixin,
     TestCase,
 ):
     model = models.DrainageBasin
@@ -217,7 +227,7 @@ class DrainageBasinsInsertTestCase(
 class DrainageBasinsUpdateTestCase(
     EssentialTestsMixin,
     DrainageBasinsSetupInitialRowMixin,
-    DrainageBasinsAdditionalTestsMixin,
+    BasinsAdditionalTestsMixin,
     TestCase,
 ):
     model = models.DrainageBasin
@@ -275,21 +285,41 @@ class DrainageBasinsSridTestCase(
     view_name = "DrainageBasins"
 
 
-class RiverBasinsInsertTestCase(DrainageBasinsInsertTestCase):
+class RiverBasinsInsertTestCase(
+    EssentialTestsMixin,
+    RiverBasinsSetupInitialRowMixin,
+    BasinsAdditionalTestsMixin,
+    TestCase,
+):
+    model = models.RiverBasin
+    view_name = "RiverBasins"
+    expected_count = 1
+    expected_name = "Attica"
+    expected_code = "06"
+    expected_remarks = "Hello world"
+    expected_x = 24.00166
+    expected_y = 36.14732
+    expected_man_made = True
+    expected_hydro_order = "18"
+    expected_hydro_order_scheme = "strahler"
+    expected_hydro_order_scope = "go figure"
+    expected_total_area = 680
+    expected_mean_slope = 0.15
+    expected_mean_elevation = 200
     model = models.RiverBasin
     view_name = "RiverBasins"
 
 
-class RiverBasinsUpdateTestCase(DrainageBasinsInsertTestCase):
+class RiverBasinsUpdateTestCase(DrainageBasinsUpdateTestCase):
     model = models.RiverBasin
     view_name = "RiverBasins"
 
 
-class RiverBasinsDeleteTestCase(DrainageBasinsInsertTestCase):
+class RiverBasinsDeleteTestCase(DeleteMixin, RiverBasinsSetupInitialRowMixin, TestCase):
     model = models.RiverBasin
     view_name = "RiverBasins"
 
 
-class RiverBasinsSridTestCase(DrainageBasinsInsertTestCase):
+class RiverBasinsSridTestCase(DrainageBasinsSridTestCase):
     model = models.RiverBasin
     view_name = "RiverBasins"
