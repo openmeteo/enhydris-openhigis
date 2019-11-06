@@ -142,9 +142,9 @@ MAP
         CLASS
             NAME "River basins"
             STYLE
-                OUTLINECOLOR 0 0 255
-                COLOR 127 127 255
-                OPACITY 50
+                OUTLINECOLOR 0 102 255
+                OPACITY 100
+                WIDTH 4
             END
         END
     END
@@ -169,9 +169,9 @@ MAP
         CLASS
             NAME "Drainage basins"
             STYLE
-                OUTLINECOLOR 0 0 255
-                COLOR 127 127 255
-                OPACITY 50
+                OUTLINECOLOR 0 102 255
+                OPACITY 100
+                WIDTH 2
             END
         END
     END
