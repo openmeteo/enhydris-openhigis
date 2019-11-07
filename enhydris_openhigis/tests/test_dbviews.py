@@ -1,6 +1,8 @@
 from django.db import connection
 from django.test import TestCase
 
+from model_mommy import mommy
+
 from enhydris_openhigis import models
 
 
@@ -29,15 +31,14 @@ class EssentialTestsMixin:
 
 
 class DeleteMixin:
+    condition = "geographicalName='Attica'"
+
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
             cursor.execute(
-                """
-                DELETE FROM openhigis.{}
-                WHERE geographicalName='Attica'
-                """.format(
-                    self.view_name
+                "DELETE FROM openhigis.{} WHERE {}".format(
+                    self.view_name, self.condition
                 )
             )
 
@@ -46,15 +47,17 @@ class DeleteMixin:
 
 
 class SridMixin:
+    condition = "geographicalName='Attica'"
+
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT ST_X(geometry), ST_Y(geometry)
-                FROM openhigis.{} WHERE geographicalName='Attica'
+                FROM openhigis.{} WHERE {}
                 """.format(
-                    self.view_name
+                    self.view_name, self.condition
                 )
             )
             self.row = cursor.fetchone()
@@ -177,6 +180,8 @@ class BasinsAdditionalTestsMixin:
             self.model.objects.first().mean_elevation, self.expected_mean_elevation
         )
 
+
+class ImportedIdTestsMixin:
     def test_imported_id(self):
         self.assertEqual(
             self.model.objects.first().imported_id, self.expected_imported_id
@@ -211,6 +216,7 @@ class DrainageBasinsInsertTestCase(
     EssentialTestsMixin,
     DrainageBasinsSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
+    ImportedIdTestsMixin,
     DrainageBasinsAdditionalTestsMixin,
     TestCase,
 ):
@@ -236,6 +242,7 @@ class DrainageBasinsUpdateTestCase(
     EssentialTestsMixin,
     DrainageBasinsSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
+    ImportedIdTestsMixin,
     DrainageBasinsAdditionalTestsMixin,
     TestCase,
 ):
@@ -299,6 +306,7 @@ class RiverBasinsInsertTestCase(
     EssentialTestsMixin,
     RiverBasinsSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
+    ImportedIdTestsMixin,
     TestCase,
 ):
     model = models.RiverBasin
@@ -321,6 +329,7 @@ class RiverBasinsUpdateTestCase(
     EssentialTestsMixin,
     DrainageBasinsSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
+    ImportedIdTestsMixin,
     TestCase,
 ):
     model = models.RiverBasin
@@ -381,3 +390,100 @@ class InsertEntityWithNullGeographicalNameTestCase(TestCase):
 
     def test_name(self):
         self.assertEqual(models.RiverBasinDistrict.objects.first().name, "")
+
+
+class StationBasinsSetupInitialRowMixin(RiverBasinsSetupInitialRowMixin):
+    def setUp(self):
+        super().setUp()
+        mommy.make(models.Station, id=1852, name="Χόμπιτον")
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.StationBasins
+                (geographicalName, hydroId, remarks, geometry, origin,
+                meanSlope, meanElevation, id, riverBasin)
+                VALUES
+                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
+                'manMade', 0.15, 200, 1852, 1851)
+                """
+            )
+
+
+class StationBasinsInsertTestCase(
+    EssentialTestsMixin,
+    StationBasinsSetupInitialRowMixin,
+    BasinsAdditionalTestsMixin,
+    TestCase,
+):
+    model = models.StationBasin
+    view_name = "StationBasins"
+    expected_count = 1
+    expected_name = "Attica"
+    expected_code = "06"
+    expected_remarks = "Hello world"
+    expected_x = 24.00166
+    expected_y = 36.14732
+    expected_man_made = True
+    expected_mean_slope = 0.15
+    expected_mean_elevation = 200
+    model = models.RiverBasin
+    view_name = "StationBasins"
+
+    def test_geographical_name(self):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT geographicalName FROM openhigis.StationBasins")
+            row = cursor.fetchone()
+        self.assertEqual(row[0], "Υπολεκάνη που ορίζεται από το σταθμό «Χόμπιτον»")
+
+
+class StationBasinsUpdateTestCase(
+    EssentialTestsMixin,
+    StationBasinsSetupInitialRowMixin,
+    BasinsAdditionalTestsMixin,
+    TestCase,
+):
+    model = models.StationBasin
+    view_name = "StationBasins"
+    expected_count = 1
+    expected_name = "Epirus"
+    expected_code = "08"
+    expected_remarks = "Hello planet"
+    expected_x = 24.59318
+    expected_y = 40.65191
+    expected_man_made = False
+    expected_mean_slope = 0.16
+    expected_mean_elevation = 300
+
+    def setUp(self):
+        super().setUp()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE openhigis.{}
+                SET
+                geographicalName='Epirus',
+                hydroId='08',
+                remarks='Hello planet',
+                geometry='SRID=2100;POINT(550000 4500000)',
+                origin='natural',
+                meanSlope=0.16,
+                meanElevation=300
+                WHERE remarks='Hello world'
+                """.format(
+                    self.view_name
+                )
+            )
+
+
+class StationBasinsDeleteTestCase(
+    DeleteMixin, StationBasinsSetupInitialRowMixin, TestCase
+):
+    model = models.StationBasin
+    view_name = "StationBasins"
+    condition = "remarks = 'Hello world'"
+
+
+class StationBasinsSridTestCase(SridMixin, StationBasinsSetupInitialRowMixin, TestCase):
+    model = models.StationBasin
+    view_name = "StationBasins"
+    condition = "remarks = 'Hello world'"

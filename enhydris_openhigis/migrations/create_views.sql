@@ -346,6 +346,106 @@ CREATE TRIGGER RiverBasins_delete
     INSTEAD OF DELETE ON RiverBasins
     FOR EACH ROW EXECUTE PROCEDURE delete_RiverBasins();
 
+/* Station basins */
+
+DROP VIEW IF EXISTS StationBasins;
+
+CREATE VIEW StationBasins
+    AS SELECT
+        station_id AS id,
+        'Υπολεκάνη που ορίζεται από το σταθμό «' || station.name || '»'
+            AS geographicalName,
+        g.code AS hydroId,
+        g.last_modified AS beginLifespanVersion,
+        g.remarks,
+        sb.geom2100 AS geometry,
+        riverbasin.imported_id AS riverBasin,
+        CASE WHEN sb.man_made IS NULL THEN ''
+             WHEN sb.man_made THEN 'manMade'
+             ELSE 'natural'
+             END AS origin,
+        ST_Area(sb.geom2100) / 1000000 AS area,
+        sb.mean_slope AS meanSlope,
+        sb.mean_elevation AS meanElevation
+    FROM
+        enhydris_gentity g
+        INNER JOIN enhydris_openhigis_stationbasin sb
+        ON sb.garea_ptr_id = g.id
+        INNER JOIN enhydris_openhigis_riverbasin riverbasin
+        ON riverbasin.garea_ptr_id = sb.river_basin_id
+        INNER JOIN enhydris_gentity station
+        ON station.id = sb.station_id;
+
+CREATE OR REPLACE FUNCTION insert_into_StationBasins() RETURNS TRIGGER
+AS $$
+DECLARE
+    gentity_id INTEGER;
+    new_river_basin_id INTEGER;
+BEGIN
+    gentity_id = openhigis.insert_into_garea(NEW, 5);
+    SELECT garea_ptr_id INTO new_river_basin_id
+        FROM enhydris_openhigis_riverbasin
+        WHERE imported_id = NEW.riverBasin;
+    INSERT INTO enhydris_openhigis_stationbasin
+        (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation,
+            river_basin_id, station_id)
+        VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
+            NEW.meanSlope, NEW.meanElevation, new_river_basin_id, NEW.id);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER StationBasins_insert
+    INSTEAD OF INSERT ON StationBasins
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_StationBasins();
+
+CREATE OR REPLACE FUNCTION update_StationBasins() RETURNS TRIGGER
+AS $$
+DECLARE
+    gentity_id INTEGER;
+    new_river_basin_id INTEGER;
+BEGIN
+    SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_stationbasin
+        WHERE station_id=OLD.id;
+    SELECT garea_ptr_id INTO new_river_basin_id
+        FROM enhydris_openhigis_riverbasin
+        WHERE imported_id = NEW.riverBasin;
+    PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
+    UPDATE enhydris_openhigis_stationbasin
+    SET
+        geom2100=NEW.geometry,
+        man_made=(NEW.origin = 'manMade'),
+        mean_slope=NEW.meanSlope,
+        mean_elevation=NEW.meanElevation,
+        river_basin_id=new_river_basin_id
+        WHERE station_id=OLD.id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER StationBasins_update
+    INSTEAD OF UPDATE ON StationBasins
+    FOR EACH ROW EXECUTE PROCEDURE update_StationBasins();
+
+CREATE OR REPLACE FUNCTION delete_StationBasins()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE gentity_id INTEGER;
+BEGIN
+    SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_stationbasin
+        WHERE station_id=OLD.id;
+    DELETE FROM enhydris_openhigis_stationbasin WHERE garea_ptr_id=gentity_id;
+    DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
+    DELETE FROM enhydris_gentity WHERE id=gentity_id;
+    RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER StationBasins_delete
+    INSTEAD OF DELETE ON StationBasins
+    FOR EACH ROW EXECUTE PROCEDURE delete_StationBasins();
+
 /* Give permissions */
 
 GRANT USAGE ON SCHEMA openhigis TO mapserver, anton;

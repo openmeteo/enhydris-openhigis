@@ -175,4 +175,32 @@ MAP
             END
         END
     END
+
+    LAYER
+        NAME "StationBasins"
+        TYPE POLYGON
+        CONNECTIONTYPE POSTGIS
+        CONNECTION "host=localhost dbname=openmeteo user=mapserver"
+        METADATA
+            "wms_title" "Station basins"
+            "wfs_title" "Station basins"
+            "gml_include_items" "all"
+            "gml_featureid" "id"
+        END
+        STATUS ON
+        DATA "geometry FROM openhigis.StationBasins USING UNIQUE id USING SRID=2100"
+        PROJECTION
+            "init=epsg:2100"
+        END
+        TEMPLATE "wmspopup-basin.html"
+        CLASS
+            NAME "Station basins"
+            STYLE
+                OUTLINECOLOR 0 102 255
+                OPACITY 100
+                WIDTH 4
+            END
+        END
+    END
+
 END
