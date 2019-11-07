@@ -83,7 +83,6 @@ class BasinMixin(models.Model):
     """
 
     man_made = models.BooleanField(blank=True, null=True)
-    total_area = models.FloatField(blank=True, null=True)
     mean_slope = models.FloatField(blank=True, null=True)
     mean_elevation = models.FloatField(blank=True, null=True)
 
@@ -91,7 +90,7 @@ class BasinMixin(models.Model):
         abstract = True
 
 
-class RiverBasin(Garea, GGRS87Mixin, HydroOrderCodeMixin, ImportedIdMixin, BasinMixin):
+class RiverBasin(Garea, GGRS87Mixin, ImportedIdMixin, BasinMixin):
     pass
 
 
@@ -104,4 +103,5 @@ class DrainageBasin(
     above for an explanation.
     """
 
+    total_area = models.FloatField(blank=True, null=True)
     river_basin = models.ForeignKey(RiverBasin, on_delete=models.CASCADE)

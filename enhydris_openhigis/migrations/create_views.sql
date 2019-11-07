@@ -282,11 +282,7 @@ CREATE VIEW RiverBasins
              WHEN rb.man_made THEN 'manMade'
              ELSE 'natural'
              END AS origin,
-        rb.hydro_order AS basinOrder,
-        rb.hydro_order_scheme AS basinOrderScheme,
-        rb.hydro_order_scope AS basinOrderScope,
         ST_Area(rb.geom2100) / 1000000 AS area,
-        rb.total_area AS totalArea,
         rb.mean_slope AS meanSlope,
         rb.mean_elevation AS meanElevation
     FROM
@@ -300,15 +296,10 @@ DECLARE gentity_id INTEGER;
 BEGIN
     gentity_id = openhigis.insert_into_garea(NEW, 3);
     INSERT INTO enhydris_openhigis_riverbasin
-        (garea_ptr_id, geom2100, man_made, hydro_order,
-        hydro_order_scheme, hydro_order_scope, total_area, mean_slope,
-        mean_elevation, imported_id)
-        VALUES (gentity_id, NEW.geometry,
-            NEW.origin = 'manMade', COALESCE(NEW.basinOrder, ''),
-            COALESCE(NEW.basinOrderScheme, ''),
-            COALESCE(NEW.basinOrderScope, ''), NEW.totalArea, NEW.meanSlope,
-            NEW.meanElevation, NEW.objectId
-        );
+        (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation,
+            imported_id)
+        VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
+            NEW.meanSlope, NEW.meanElevation, NEW.objectId);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -328,10 +319,6 @@ BEGIN
     SET
         geom2100=NEW.geometry,
         man_made=(NEW.origin = 'manMade'),
-        hydro_order=COALESCE(NEW.basinOrder, ''),
-        hydro_order_scheme=COALESCE(NEW.basinOrderScheme, ''),
-        hydro_order_scope=COALESCE(NEW.basinOrderScope, ''),
-        total_area=NEW.totalArea,
         mean_slope=NEW.meanSlope,
         mean_elevation=NEW.meanElevation
         WHERE imported_id=OLD.objectId;

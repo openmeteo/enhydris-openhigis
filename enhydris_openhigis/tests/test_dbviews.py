@@ -137,12 +137,11 @@ class RiverBasinsSetupInitialRowMixin:
             cursor.execute(
                 """
                 INSERT INTO openhigis.RiverBasins
-                (geographicalName, hydroId, remarks, geometry, origin, basinOrder,
-                basinOrderScheme, basinOrderScope, totalArea, meanSlope, meanElevation,
-                objectId)
+                (geographicalName, hydroId, remarks, geometry, origin, meanSlope,
+                meanElevation, objectId)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 1851)
+                'manMade', 0.15, 200, 1851)
                 """
             )
 
@@ -168,6 +167,18 @@ class BasinsAdditionalTestsMixin:
     def test_man_made(self):
         self.assertEqual(self.model.objects.first().man_made, self.expected_man_made)
 
+    def test_mean_slope(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().mean_slope, self.expected_mean_slope
+        )
+
+    def test_mean_elevation(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().mean_elevation, self.expected_mean_elevation
+        )
+
+
+class DrainageBasinsAdditionalTestsMixin:
     def test_hydro_order(self):
         self.assertEqual(
             self.model.objects.first().hydro_order, self.expected_hydro_order
@@ -190,21 +201,12 @@ class BasinsAdditionalTestsMixin:
             self.model.objects.first().total_area, self.expected_total_area
         )
 
-    def test_mean_slope(self):
-        self.assertAlmostEqual(
-            self.model.objects.first().mean_slope, self.expected_mean_slope
-        )
-
-    def test_mean_elevation(self):
-        self.assertAlmostEqual(
-            self.model.objects.first().mean_elevation, self.expected_mean_elevation
-        )
-
 
 class DrainageBasinsInsertTestCase(
     EssentialTestsMixin,
     DrainageBasinsSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
+    DrainageBasinsAdditionalTestsMixin,
     TestCase,
 ):
     model = models.DrainageBasin
@@ -228,6 +230,7 @@ class DrainageBasinsUpdateTestCase(
     EssentialTestsMixin,
     DrainageBasinsSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
+    DrainageBasinsAdditionalTestsMixin,
     TestCase,
 ):
     model = models.DrainageBasin
@@ -300,19 +303,49 @@ class RiverBasinsInsertTestCase(
     expected_x = 24.00166
     expected_y = 36.14732
     expected_man_made = True
-    expected_hydro_order = "18"
-    expected_hydro_order_scheme = "strahler"
-    expected_hydro_order_scope = "go figure"
-    expected_total_area = 680
     expected_mean_slope = 0.15
     expected_mean_elevation = 200
     model = models.RiverBasin
     view_name = "RiverBasins"
 
 
-class RiverBasinsUpdateTestCase(DrainageBasinsUpdateTestCase):
+class RiverBasinsUpdateTestCase(
+    EssentialTestsMixin,
+    DrainageBasinsSetupInitialRowMixin,
+    BasinsAdditionalTestsMixin,
+    TestCase,
+):
     model = models.RiverBasin
     view_name = "RiverBasins"
+    expected_count = 1
+    expected_name = "Epirus"
+    expected_code = "08"
+    expected_remarks = "Hello planet"
+    expected_x = 24.59318
+    expected_y = 40.65191
+    expected_man_made = False
+    expected_mean_slope = 0.16
+    expected_mean_elevation = 300
+
+    def setUp(self):
+        super().setUp()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE openhigis.{}
+                SET
+                geographicalName='Epirus',
+                hydroId='08',
+                remarks='Hello planet',
+                geometry='SRID=2100;POINT(550000 4500000)',
+                origin='natural',
+                meanSlope=0.16,
+                meanElevation=300
+                WHERE geographicalName='Attica'
+                """.format(
+                    self.view_name
+                )
+            )
 
 
 class RiverBasinsDeleteTestCase(DeleteMixin, RiverBasinsSetupInitialRowMixin, TestCase):
