@@ -72,7 +72,7 @@ class RiverBasinDistrictsSetupInitialRowMixin:
             cursor.execute(
                 """
                 INSERT INTO openhigis.RiverBasinDistricts
-                (geographicalName, hydroId, remarks, geometry, objectId)
+                (geographicalName, hydroId, remarks, geometry, id)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1852)
                 """
@@ -138,7 +138,7 @@ class RiverBasinsSetupInitialRowMixin:
                 """
                 INSERT INTO openhigis.RiverBasins
                 (geographicalName, hydroId, remarks, geometry, origin, meanSlope,
-                meanElevation, objectId)
+                meanElevation, id)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
                 'manMade', 0.15, 200, 1851)
@@ -155,7 +155,7 @@ class DrainageBasinsSetupInitialRowMixin(RiverBasinsSetupInitialRowMixin):
                 INSERT INTO openhigis.DrainageBasins
                 (geographicalName, hydroId, remarks, geometry, origin, basinOrder,
                 basinOrderScheme, basinOrderScope, totalArea, meanSlope, meanElevation,
-                objectId, riverBasin)
+                id, riverBasin)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
                 'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 1852, 1851)
@@ -175,6 +175,11 @@ class BasinsAdditionalTestsMixin:
     def test_mean_elevation(self):
         self.assertAlmostEqual(
             self.model.objects.first().mean_elevation, self.expected_mean_elevation
+        )
+
+    def test_imported_id(self):
+        self.assertEqual(
+            self.model.objects.first().imported_id, self.expected_imported_id
         )
 
 
@@ -224,6 +229,7 @@ class DrainageBasinsInsertTestCase(
     expected_total_area = 680
     expected_mean_slope = 0.15
     expected_mean_elevation = 200
+    expected_imported_id = 1852
 
 
 class DrainageBasinsUpdateTestCase(
@@ -248,6 +254,7 @@ class DrainageBasinsUpdateTestCase(
     expected_total_area = 690
     expected_mean_slope = 0.16
     expected_mean_elevation = 300
+    expected_imported_id = 1852
 
     def setUp(self):
         super().setUp()
@@ -305,6 +312,7 @@ class RiverBasinsInsertTestCase(
     expected_man_made = True
     expected_mean_slope = 0.15
     expected_mean_elevation = 200
+    expected_imported_id = 1851
     model = models.RiverBasin
     view_name = "RiverBasins"
 
@@ -326,6 +334,7 @@ class RiverBasinsUpdateTestCase(
     expected_man_made = False
     expected_mean_slope = 0.16
     expected_mean_elevation = 300
+    expected_imported_id = 1851
 
     def setUp(self):
         super().setUp()

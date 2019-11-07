@@ -88,8 +88,7 @@ DROP VIEW IF EXISTS RiverBasinDistricts;
 
 CREATE VIEW RiverBasinDistricts
     AS SELECT
-        g.id,
-        rbd.imported_id AS objectId,
+        rbd.imported_id AS id,
         g.name AS geographicalName,
         g.code AS hydroId,
         g.remarks,
@@ -108,7 +107,7 @@ BEGIN
     gentity_id = openhigis.insert_into_garea(NEW, 2);
     INSERT INTO enhydris_openhigis_riverbasindistrict
         (garea_ptr_id, geom2100, imported_id)
-        VALUES (gentity_id, NEW.geometry, NEW.objectId);
+        VALUES (gentity_id, NEW.geometry, NEW.id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -122,11 +121,11 @@ AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_riverbasindistrict
-        WHERE imported_id=OLD.objectId;
+        WHERE imported_id=OLD.id;
     PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     UPDATE enhydris_openhigis_riverbasindistrict
     SET geom2100=NEW.geometry
-    WHERE imported_id=OLD.objectId;
+    WHERE imported_id=OLD.id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -142,7 +141,7 @@ AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_riverbasindistrict
-        WHERE imported_id=OLD.objectId;
+        WHERE imported_id=OLD.id;
     DELETE FROM enhydris_openhigis_riverbasindistrict WHERE garea_ptr_id=gentity_id;
     DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
     DELETE FROM enhydris_gentity WHERE id=gentity_id;
@@ -160,8 +159,7 @@ DROP VIEW IF EXISTS DrainageBasins;
 
 CREATE VIEW DrainageBasins
     AS SELECT
-        g.id,
-        drb.imported_id as objectId,
+        drb.imported_id as id,
         g.name AS geographicalName,
         g.code AS hydroId,
         g.last_modified AS beginLifespanVersion,
@@ -204,7 +202,7 @@ BEGIN
             NEW.origin = 'manMade', COALESCE(NEW.basinOrder, ''),
             COALESCE(NEW.basinOrderScheme, ''),
             COALESCE(NEW.basinOrderScope, ''), NEW.totalArea, NEW.meanSlope,
-            NEW.meanElevation, NEW.objectId
+            NEW.meanElevation, NEW.id
         );
     RETURN NEW;
 END;
@@ -221,7 +219,7 @@ DECLARE
     new_river_basin_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_drainagebasin
-        WHERE imported_id=OLD.objectId;
+        WHERE imported_id=OLD.id;
     SELECT garea_ptr_id INTO new_river_basin_id
         FROM enhydris_openhigis_riverbasin
         WHERE imported_id = NEW.riverBasin;
@@ -237,7 +235,7 @@ BEGIN
         total_area=NEW.totalArea,
         mean_slope=NEW.meanSlope,
         mean_elevation=NEW.meanElevation
-        WHERE imported_id=OLD.objectId;
+        WHERE imported_id=OLD.id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -253,7 +251,7 @@ AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_drainagebasin
-        WHERE imported_id=OLD.objectId;
+        WHERE imported_id=OLD.id;
     DELETE FROM enhydris_openhigis_drainagebasin WHERE garea_ptr_id=gentity_id;
     DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
     DELETE FROM enhydris_gentity WHERE id=gentity_id;
@@ -271,8 +269,7 @@ DROP VIEW IF EXISTS RiverBasins;
 
 CREATE VIEW RiverBasins
     AS SELECT
-        g.id,
-        rb.imported_id AS objectId,
+        rb.imported_id AS id,
         g.name AS geographicalName,
         g.code AS hydroId,
         g.last_modified AS beginLifespanVersion,
@@ -299,7 +296,7 @@ BEGIN
         (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation,
             imported_id)
         VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
-            NEW.meanSlope, NEW.meanElevation, NEW.objectId);
+            NEW.meanSlope, NEW.meanElevation, NEW.id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -313,7 +310,7 @@ AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_riverbasin
-        WHERE imported_id=OLD.objectId;
+        WHERE imported_id=OLD.id;
     PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     UPDATE enhydris_openhigis_riverbasin
     SET
@@ -321,7 +318,7 @@ BEGIN
         man_made=(NEW.origin = 'manMade'),
         mean_slope=NEW.meanSlope,
         mean_elevation=NEW.meanElevation
-        WHERE imported_id=OLD.objectId;
+        WHERE imported_id=OLD.id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -337,7 +334,7 @@ AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_riverbasin
-        WHERE imported_id=OLD.objectId;
+        WHERE imported_id=OLD.id;
     DELETE FROM enhydris_openhigis_riverbasin WHERE garea_ptr_id=gentity_id;
     DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
     DELETE FROM enhydris_gentity WHERE id=gentity_id;
