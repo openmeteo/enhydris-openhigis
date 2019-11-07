@@ -365,3 +365,19 @@ class RiverBasinsDeleteTestCase(DeleteMixin, RiverBasinsSetupInitialRowMixin, Te
 class RiverBasinsSridTestCase(DrainageBasinsSridTestCase):
     model = models.RiverBasin
     view_name = "RiverBasins"
+
+
+class InsertEntityWithNullGeographicalNameTestCase(TestCase):
+    def setUp(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.RiverBasinDistricts
+                (geographicalName, hydroId, remarks, geometry, id)
+                VALUES
+                (NULL, '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1852)
+                """
+            )
+
+    def test_name(self):
+        self.assertEqual(models.RiverBasinDistrict.objects.first().name, "")

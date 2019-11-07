@@ -47,7 +47,7 @@ DECLARE gentity_id INTEGER;
 BEGIN
     INSERT INTO enhydris_gentity (name, code, remarks, geom)
         VALUES (
-            NEW.geographicalName,
+            COALESCE(NEW.geographicalName, ''),
             COALESCE(NEW.hydroId, ''),
             COALESCE(NEW.remarks, ''),
             ST_Transform(NEW.geometry, 4326)
