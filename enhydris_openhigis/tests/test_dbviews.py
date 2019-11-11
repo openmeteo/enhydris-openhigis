@@ -69,12 +69,12 @@ class SridMixin:
         self.assertAlmostEqual(self.row[1], 4000000.00, places=2)
 
 
-class RiverBasinDistrictsSetupInitialRowMixin:
+class RiverBasinDistrictSetupInitialRowMixin:
     def setUp(self):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO openhigis.RiverBasinDistricts
+                INSERT INTO openhigis.RiverBasinDistrict
                 (geographicalName, hydroId, remarks, geometry, id)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1852)
@@ -82,11 +82,11 @@ class RiverBasinDistrictsSetupInitialRowMixin:
             )
 
 
-class RiverBasinDistrictsInsertTestCase(
-    EssentialTestsMixin, RiverBasinDistrictsSetupInitialRowMixin, TestCase
+class RiverBasinDistrictInsertTestCase(
+    EssentialTestsMixin, RiverBasinDistrictSetupInitialRowMixin, TestCase
 ):
     model = models.RiverBasinDistrict
-    view_name = "RiverBasinDistricts"
+    view_name = "RiverBasinDistrict"
     expected_count = 1
     expected_name = "Attica"
     expected_code = "06"
@@ -95,11 +95,11 @@ class RiverBasinDistrictsInsertTestCase(
     expected_y = 36.14732
 
 
-class RiverBasinDistrictsUpdateTestCase(
-    EssentialTestsMixin, RiverBasinDistrictsSetupInitialRowMixin, TestCase
+class RiverBasinDistrictUpdateTestCase(
+    EssentialTestsMixin, RiverBasinDistrictSetupInitialRowMixin, TestCase
 ):
     model = models.RiverBasinDistrict
-    view_name = "RiverBasinDistricts"
+    view_name = "RiverBasinDistrict"
     expected_count = 1
     expected_name = "Epirus"
     expected_code = "08"
@@ -112,7 +112,7 @@ class RiverBasinDistrictsUpdateTestCase(
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                UPDATE openhigis.RiverBasinDistricts
+                UPDATE openhigis.RiverBasinDistrict
                 SET geographicalName='Epirus', hydroId='08', remarks='Hello planet',
                 geometry='SRID=2100;POINT(550000 4500000)'
                 WHERE geographicalName='Attica'
@@ -120,26 +120,26 @@ class RiverBasinDistrictsUpdateTestCase(
             )
 
 
-class RiverBasinDistrictsDeleteTestCase(
-    DeleteMixin, RiverBasinDistrictsSetupInitialRowMixin, TestCase
+class RiverBasinDistrictDeleteTestCase(
+    DeleteMixin, RiverBasinDistrictSetupInitialRowMixin, TestCase
 ):
     model = models.RiverBasinDistrict
-    view_name = "RiverBasinDistricts"
+    view_name = "RiverBasinDistrict"
 
 
-class RiverBasinDistrictsSridTestCase(
-    SridMixin, RiverBasinDistrictsSetupInitialRowMixin, TestCase
+class RiverBasinDistrictSridTestCase(
+    SridMixin, RiverBasinDistrictSetupInitialRowMixin, TestCase
 ):
     model = models.RiverBasinDistrict
-    view_name = "RiverBasinDistricts"
+    view_name = "RiverBasinDistrict"
 
 
-class RiverBasinsSetupInitialRowMixin:
+class RiverBasinSetupInitialRowMixin:
     def setUp(self):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO openhigis.RiverBasins
+                INSERT INTO openhigis.RiverBasin
                 (geographicalName, hydroId, remarks, geometry, origin, meanSlope,
                 meanElevation, id)
                 VALUES
@@ -149,13 +149,13 @@ class RiverBasinsSetupInitialRowMixin:
             )
 
 
-class DrainageBasinsSetupInitialRowMixin(RiverBasinsSetupInitialRowMixin):
+class DrainageBasinSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO openhigis.DrainageBasins
+                INSERT INTO openhigis.DrainageBasin
                 (geographicalName, hydroId, remarks, geometry, origin, basinOrder,
                 basinOrderScheme, basinOrderScope, totalArea, meanSlope, meanElevation,
                 id, riverBasin)
@@ -188,7 +188,7 @@ class ImportedIdTestsMixin:
         )
 
 
-class DrainageBasinsAdditionalTestsMixin:
+class DrainageBasinAdditionalTestsMixin:
     def test_hydro_order(self):
         self.assertEqual(
             self.model.objects.first().hydro_order, self.expected_hydro_order
@@ -212,16 +212,16 @@ class DrainageBasinsAdditionalTestsMixin:
         )
 
 
-class DrainageBasinsInsertTestCase(
+class DrainageBasinInsertTestCase(
     EssentialTestsMixin,
-    DrainageBasinsSetupInitialRowMixin,
+    DrainageBasinSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
     ImportedIdTestsMixin,
-    DrainageBasinsAdditionalTestsMixin,
+    DrainageBasinAdditionalTestsMixin,
     TestCase,
 ):
     model = models.DrainageBasin
-    view_name = "DrainageBasins"
+    view_name = "DrainageBasin"
     expected_count = 1
     expected_name = "Attica"
     expected_code = "06"
@@ -238,16 +238,16 @@ class DrainageBasinsInsertTestCase(
     expected_imported_id = 1852
 
 
-class DrainageBasinsUpdateTestCase(
+class DrainageBasinUpdateTestCase(
     EssentialTestsMixin,
-    DrainageBasinsSetupInitialRowMixin,
+    DrainageBasinSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
     ImportedIdTestsMixin,
-    DrainageBasinsAdditionalTestsMixin,
+    DrainageBasinAdditionalTestsMixin,
     TestCase,
 ):
     model = models.DrainageBasin
-    view_name = "DrainageBasins"
+    view_name = "DrainageBasin"
     expected_count = 1
     expected_name = "Epirus"
     expected_code = "08"
@@ -288,29 +288,27 @@ class DrainageBasinsUpdateTestCase(
             )
 
 
-class DrainageBasinsDeleteTestCase(
-    DeleteMixin, DrainageBasinsSetupInitialRowMixin, TestCase
+class DrainageBasinDeleteTestCase(
+    DeleteMixin, DrainageBasinSetupInitialRowMixin, TestCase
 ):
     model = models.DrainageBasin
-    view_name = "DrainageBasins"
+    view_name = "DrainageBasin"
 
 
-class DrainageBasinsSridTestCase(
-    SridMixin, DrainageBasinsSetupInitialRowMixin, TestCase
-):
+class DrainageBasinSridTestCase(SridMixin, DrainageBasinSetupInitialRowMixin, TestCase):
     model = models.DrainageBasin
-    view_name = "DrainageBasins"
+    view_name = "DrainageBasin"
 
 
-class RiverBasinsInsertTestCase(
+class RiverBasinInsertTestCase(
     EssentialTestsMixin,
-    RiverBasinsSetupInitialRowMixin,
+    RiverBasinSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
     ImportedIdTestsMixin,
     TestCase,
 ):
     model = models.RiverBasin
-    view_name = "RiverBasins"
+    view_name = "RiverBasin"
     expected_count = 1
     expected_name = "Attica"
     expected_code = "06"
@@ -322,18 +320,18 @@ class RiverBasinsInsertTestCase(
     expected_mean_elevation = 200
     expected_imported_id = 1851
     model = models.RiverBasin
-    view_name = "RiverBasins"
+    view_name = "RiverBasin"
 
 
-class RiverBasinsUpdateTestCase(
+class RiverBasinUpdateTestCase(
     EssentialTestsMixin,
-    DrainageBasinsSetupInitialRowMixin,
+    DrainageBasinSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
     ImportedIdTestsMixin,
     TestCase,
 ):
     model = models.RiverBasin
-    view_name = "RiverBasins"
+    view_name = "RiverBasin"
     expected_count = 1
     expected_name = "Epirus"
     expected_code = "08"
@@ -366,14 +364,14 @@ class RiverBasinsUpdateTestCase(
             )
 
 
-class RiverBasinsDeleteTestCase(DeleteMixin, RiverBasinsSetupInitialRowMixin, TestCase):
+class RiverBasinDeleteTestCase(DeleteMixin, RiverBasinSetupInitialRowMixin, TestCase):
     model = models.RiverBasin
-    view_name = "RiverBasins"
+    view_name = "RiverBasin"
 
 
-class RiverBasinsSridTestCase(DrainageBasinsSridTestCase):
+class RiverBasinSridTestCase(DrainageBasinSridTestCase):
     model = models.RiverBasin
-    view_name = "RiverBasins"
+    view_name = "RiverBasin"
 
 
 class InsertEntityWithNullGeographicalNameTestCase(TestCase):
@@ -381,7 +379,7 @@ class InsertEntityWithNullGeographicalNameTestCase(TestCase):
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO openhigis.RiverBasinDistricts
+                INSERT INTO openhigis.RiverBasinDistrict
                 (geographicalName, hydroId, remarks, geometry, id)
                 VALUES
                 (NULL, '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1852)
@@ -392,14 +390,14 @@ class InsertEntityWithNullGeographicalNameTestCase(TestCase):
         self.assertEqual(models.RiverBasinDistrict.objects.first().name, "")
 
 
-class StationBasinsSetupInitialRowMixin(RiverBasinsSetupInitialRowMixin):
+class StationBasinSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
     def setUp(self):
         super().setUp()
         mommy.make(models.Station, id=1852, name="Χόμπιτον")
         with connection.cursor() as cursor:
             cursor.execute(
                 """
-                INSERT INTO openhigis.StationBasins
+                INSERT INTO openhigis.StationBasin
                 (geographicalName, hydroId, remarks, geometry, origin,
                 meanSlope, meanElevation, id, riverBasin)
                 VALUES
@@ -409,14 +407,14 @@ class StationBasinsSetupInitialRowMixin(RiverBasinsSetupInitialRowMixin):
             )
 
 
-class StationBasinsInsertTestCase(
+class StationBasinInsertTestCase(
     EssentialTestsMixin,
-    StationBasinsSetupInitialRowMixin,
+    StationBasinSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
     TestCase,
 ):
     model = models.StationBasin
-    view_name = "StationBasins"
+    view_name = "StationBasin"
     expected_count = 1
     expected_name = "Attica"
     expected_code = "06"
@@ -427,23 +425,23 @@ class StationBasinsInsertTestCase(
     expected_mean_slope = 0.15
     expected_mean_elevation = 200
     model = models.RiverBasin
-    view_name = "StationBasins"
+    view_name = "StationBasin"
 
     def test_geographical_name(self):
         with connection.cursor() as cursor:
-            cursor.execute("SELECT geographicalName FROM openhigis.StationBasins")
+            cursor.execute("SELECT geographicalName FROM openhigis.StationBasin")
             row = cursor.fetchone()
         self.assertEqual(row[0], "Υπολεκάνη που ορίζεται από το σταθμό «Χόμπιτον»")
 
 
-class StationBasinsUpdateTestCase(
+class StationBasinUpdateTestCase(
     EssentialTestsMixin,
-    StationBasinsSetupInitialRowMixin,
+    StationBasinSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
     TestCase,
 ):
     model = models.StationBasin
-    view_name = "StationBasins"
+    view_name = "StationBasin"
     expected_count = 1
     expected_name = "Epirus"
     expected_code = "08"
@@ -475,15 +473,15 @@ class StationBasinsUpdateTestCase(
             )
 
 
-class StationBasinsDeleteTestCase(
-    DeleteMixin, StationBasinsSetupInitialRowMixin, TestCase
+class StationBasinDeleteTestCase(
+    DeleteMixin, StationBasinSetupInitialRowMixin, TestCase
 ):
     model = models.StationBasin
-    view_name = "StationBasins"
+    view_name = "StationBasin"
     condition = "remarks = 'Hello world'"
 
 
-class StationBasinsSridTestCase(SridMixin, StationBasinsSetupInitialRowMixin, TestCase):
+class StationBasinSridTestCase(SridMixin, StationBasinSetupInitialRowMixin, TestCase):
     model = models.StationBasin
-    view_name = "StationBasins"
+    view_name = "StationBasin"
     condition = "remarks = 'Hello world'"

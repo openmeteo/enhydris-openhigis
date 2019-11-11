@@ -6,7 +6,7 @@ SET search_path TO openhigis, public;
 
 DROP VIEW IF EXISTS stations;
 
-CREATE VIEW stations
+CREATE VIEW station
     AS SELECT
         g.id,
         g.name,
@@ -26,7 +26,7 @@ CREATE VIEW stations
         INNER JOIN enhydris_station s ON s.gpoint_ptr_id = g.id
         INNER JOIN enhydris_openhigis_station gs ON gs.station_ptr_id = g.id;
 
-CREATE OR REPLACE FUNCTION update_stations() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION update_station() RETURNS TRIGGER
 AS $$
 BEGIN
     UPDATE enhydris_openhigis_station SET geom2100=NEW.geometry
@@ -35,9 +35,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER stations_update
-    INSTEAD OF UPDATE ON stations
-    FOR EACH ROW EXECUTE PROCEDURE update_stations();
+CREATE TRIGGER station_update
+    INSTEAD OF UPDATE ON station
+    FOR EACH ROW EXECUTE PROCEDURE update_station();
 
 /* Functions common to all tables */
 
@@ -84,9 +84,9 @@ $$ LANGUAGE plpgsql;
 
 /* River basin districts */
 
-DROP VIEW IF EXISTS RiverBasinDistricts;
+DROP VIEW IF EXISTS RiverBasinDistrict;
 
-CREATE VIEW RiverBasinDistricts
+CREATE VIEW RiverBasinDistrict
     AS SELECT
         rbd.imported_id AS id,
         g.name AS geographicalName,
@@ -100,7 +100,7 @@ CREATE VIEW RiverBasinDistricts
         INNER JOIN enhydris_openhigis_riverbasindistrict rbd
         ON rbd.garea_ptr_id = g.id;
 
-CREATE OR REPLACE FUNCTION insert_into_RiverBasinDistricts() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION insert_into_RiverBasinDistrict() RETURNS TRIGGER
 AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
@@ -112,11 +112,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER RiverBasinDistricts_insert
-    INSTEAD OF INSERT ON RiverBasinDistricts
-    FOR EACH ROW EXECUTE PROCEDURE insert_into_RiverBasinDistricts();
+CREATE TRIGGER RiverBasinDistrict_insert
+    INSTEAD OF INSERT ON RiverBasinDistrict
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_RiverBasinDistrict();
 
-CREATE OR REPLACE FUNCTION update_RiverBasinDistricts() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION update_RiverBasinDistrict() RETURNS TRIGGER
 AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
@@ -130,11 +130,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER RiverBasinDistricts_update
-    INSTEAD OF UPDATE ON RiverBasinDistricts
-    FOR EACH ROW EXECUTE PROCEDURE update_RiverBasinDistricts();
+CREATE TRIGGER RiverBasinDistrict_update
+    INSTEAD OF UPDATE ON RiverBasinDistrict
+    FOR EACH ROW EXECUTE PROCEDURE update_RiverBasinDistrict();
 
-CREATE OR REPLACE FUNCTION delete_RiverBasinDistricts()
+CREATE OR REPLACE FUNCTION delete_RiverBasinDistrict()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
@@ -149,15 +149,15 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER RiverBasinDistricts_delete
-    INSTEAD OF DELETE ON RiverBasinDistricts
-    FOR EACH ROW EXECUTE PROCEDURE delete_RiverBasinDistricts();
+CREATE TRIGGER RiverBasinDistrict_delete
+    INSTEAD OF DELETE ON RiverBasinDistrict
+    FOR EACH ROW EXECUTE PROCEDURE delete_RiverBasinDistrict();
 
 /* Drainage basins */
 
-DROP VIEW IF EXISTS DrainageBasins;
+DROP VIEW IF EXISTS DrainageBasin;
 
-CREATE VIEW DrainageBasins
+CREATE VIEW DrainageBasin
     AS SELECT
         drb.imported_id as id,
         g.name AS geographicalName,
@@ -184,7 +184,7 @@ CREATE VIEW DrainageBasins
         INNER JOIN enhydris_openhigis_riverbasin riverbasin
             ON drb.river_basin_id = riverbasin.garea_ptr_id;
 
-CREATE OR REPLACE FUNCTION insert_into_DrainageBasins() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION insert_into_DrainageBasin() RETURNS TRIGGER
 AS $$
 DECLARE
     gentity_id INTEGER;
@@ -208,11 +208,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER DrainageBasins_insert
-    INSTEAD OF INSERT ON DrainageBasins
-    FOR EACH ROW EXECUTE PROCEDURE insert_into_DrainageBasins();
+CREATE TRIGGER DrainageBasin_insert
+    INSTEAD OF INSERT ON DrainageBasin
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_DrainageBasin();
 
-CREATE OR REPLACE FUNCTION update_DrainageBasins() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION update_DrainageBasin() RETURNS TRIGGER
 AS $$
 DECLARE
     gentity_id INTEGER;
@@ -240,11 +240,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER DrainageBasins_update
-    INSTEAD OF UPDATE ON DrainageBasins
-    FOR EACH ROW EXECUTE PROCEDURE update_DrainageBasins();
+CREATE TRIGGER DrainageBasin_update
+    INSTEAD OF UPDATE ON DrainageBasin
+    FOR EACH ROW EXECUTE PROCEDURE update_DrainageBasin();
 
-CREATE OR REPLACE FUNCTION delete_DrainageBasins()
+CREATE OR REPLACE FUNCTION delete_DrainageBasin()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
@@ -259,15 +259,15 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER DrainageBasins_delete
-    INSTEAD OF DELETE ON DrainageBasins
-    FOR EACH ROW EXECUTE PROCEDURE delete_DrainageBasins();
+CREATE TRIGGER DrainageBasin_delete
+    INSTEAD OF DELETE ON DrainageBasin
+    FOR EACH ROW EXECUTE PROCEDURE delete_DrainageBasin();
 
 /* River basins */
 
-DROP VIEW IF EXISTS RiverBasins;
+DROP VIEW IF EXISTS RiverBasin;
 
-CREATE VIEW RiverBasins
+CREATE VIEW RiverBasin
     AS SELECT
         rb.imported_id AS id,
         g.name AS geographicalName,
@@ -287,7 +287,7 @@ CREATE VIEW RiverBasins
         INNER JOIN enhydris_openhigis_riverbasin rb
         ON rb.garea_ptr_id = g.id;
 
-CREATE OR REPLACE FUNCTION insert_into_RiverBasins() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION insert_into_RiverBasin() RETURNS TRIGGER
 AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
@@ -301,11 +301,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER RiverBasins_insert
-    INSTEAD OF INSERT ON RiverBasins
-    FOR EACH ROW EXECUTE PROCEDURE insert_into_RiverBasins();
+CREATE TRIGGER RiverBasin_insert
+    INSTEAD OF INSERT ON RiverBasin
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_RiverBasin();
 
-CREATE OR REPLACE FUNCTION update_RiverBasins() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION update_RiverBasin() RETURNS TRIGGER
 AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
@@ -323,11 +323,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER RiverBasins_update
-    INSTEAD OF UPDATE ON RiverBasins
-    FOR EACH ROW EXECUTE PROCEDURE update_RiverBasins();
+CREATE TRIGGER RiverBasin_update
+    INSTEAD OF UPDATE ON RiverBasin
+    FOR EACH ROW EXECUTE PROCEDURE update_RiverBasin();
 
-CREATE OR REPLACE FUNCTION delete_RiverBasins()
+CREATE OR REPLACE FUNCTION delete_RiverBasin()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
@@ -342,15 +342,15 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER RiverBasins_delete
-    INSTEAD OF DELETE ON RiverBasins
-    FOR EACH ROW EXECUTE PROCEDURE delete_RiverBasins();
+CREATE TRIGGER RiverBasin_delete
+    INSTEAD OF DELETE ON RiverBasin
+    FOR EACH ROW EXECUTE PROCEDURE delete_RiverBasin();
 
 /* Station basins */
 
-DROP VIEW IF EXISTS StationBasins;
+DROP VIEW IF EXISTS StationBasin;
 
-CREATE VIEW StationBasins
+CREATE VIEW StationBasin
     AS SELECT
         station_id AS id,
         'Υπολεκάνη που ορίζεται από το σταθμό «' || station.name || '»'
@@ -376,7 +376,7 @@ CREATE VIEW StationBasins
         INNER JOIN enhydris_gentity station
         ON station.id = sb.station_id;
 
-CREATE OR REPLACE FUNCTION insert_into_StationBasins() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION insert_into_StationBasin() RETURNS TRIGGER
 AS $$
 DECLARE
     gentity_id INTEGER;
@@ -395,11 +395,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER StationBasins_insert
-    INSTEAD OF INSERT ON StationBasins
-    FOR EACH ROW EXECUTE PROCEDURE insert_into_StationBasins();
+CREATE TRIGGER StationBasin_insert
+    INSTEAD OF INSERT ON StationBasin
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_StationBasin();
 
-CREATE OR REPLACE FUNCTION update_StationBasins() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION update_StationBasin() RETURNS TRIGGER
 AS $$
 DECLARE
     gentity_id INTEGER;
@@ -423,11 +423,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER StationBasins_update
-    INSTEAD OF UPDATE ON StationBasins
-    FOR EACH ROW EXECUTE PROCEDURE update_StationBasins();
+CREATE TRIGGER StationBasin_update
+    INSTEAD OF UPDATE ON StationBasin
+    FOR EACH ROW EXECUTE PROCEDURE update_StationBasin();
 
-CREATE OR REPLACE FUNCTION delete_StationBasins()
+CREATE OR REPLACE FUNCTION delete_StationBasin()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
@@ -442,9 +442,9 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER StationBasins_delete
-    INSTEAD OF DELETE ON StationBasins
-    FOR EACH ROW EXECUTE PROCEDURE delete_StationBasins();
+CREATE TRIGGER StationBasin_delete
+    INSTEAD OF DELETE ON StationBasin
+    FOR EACH ROW EXECUTE PROCEDURE delete_StationBasin();
 
 /* Give permissions */
 
@@ -456,6 +456,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE
     enhydris_openhigis_riverbasin,
     enhydris_openhigis_drainagebasin,
     enhydris_openhigis_riverbasindistrict,
+    enhydris_openhigis_stationbasin,
     enhydris_openhigis_station,
     enhydris_garea,
     enhydris_gentity
