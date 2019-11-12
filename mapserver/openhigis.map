@@ -107,7 +107,7 @@ MAP
             "gml_featureid" "id"
         END
         STATUS ON
-        DATA "geometry FROM openhigis.RiverBasinDistricts USING UNIQUE id USING SRID=2100"
+        DATA "geometry FROM openhigis.RiverBasinDistrict USING UNIQUE id USING SRID=2100"
         PROJECTION
             "init=epsg:2100"
         END
@@ -134,7 +134,7 @@ MAP
             "gml_featureid" "id"
         END
         STATUS ON
-        DATA "geometry FROM openhigis.RiverBasins USING UNIQUE id USING SRID=2100"
+        DATA "geometry FROM openhigis.RiverBasin USING UNIQUE id USING SRID=2100"
         PROJECTION
             "init=epsg:2100"
         END
@@ -161,7 +161,7 @@ MAP
             "gml_featureid" "id"
         END
         STATUS ON
-        DATA "geometry FROM openhigis.DrainageBasins USING UNIQUE id USING SRID=2100"
+        DATA "geometry FROM openhigis.DrainageBasin USING UNIQUE id USING SRID=2100"
         PROJECTION
             "init=epsg:2100"
         END
@@ -188,7 +188,7 @@ MAP
             "gml_featureid" "id"
         END
         STATUS ON
-        DATA "geometry FROM openhigis.StationBasins USING UNIQUE id USING SRID=2100"
+        DATA "geometry FROM openhigis.StationBasin USING UNIQUE id USING SRID=2100"
         PROJECTION
             "init=epsg:2100"
         END
