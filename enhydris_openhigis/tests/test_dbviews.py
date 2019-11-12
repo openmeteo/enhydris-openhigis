@@ -431,7 +431,7 @@ class StationBasinInsertTestCase(
         with connection.cursor() as cursor:
             cursor.execute("SELECT geographicalName FROM openhigis.StationBasin")
             row = cursor.fetchone()
-        self.assertEqual(row[0], "Υπολεκάνη που ορίζεται από το σταθμό «Χόμπιτον»")
+        self.assertEqual(row[0], "Λεκάνη ανάντη του σταθμού Χόμπιτον")
 
 
 class StationBasinUpdateTestCase(

@@ -353,8 +353,7 @@ DROP VIEW IF EXISTS StationBasin;
 CREATE VIEW StationBasin
     AS SELECT
         station_id AS id,
-        'Υπολεκάνη που ορίζεται από το σταθμό «' || station.name || '»'
-            AS geographicalName,
+        'Λεκάνη ανάντη του σταθμού ' || station.name AS geographicalName,
         g.code AS hydroId,
         g.last_modified AS beginLifespanVersion,
         g.remarks,
