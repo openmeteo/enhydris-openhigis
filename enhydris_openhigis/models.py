@@ -1,6 +1,6 @@
 from django.contrib.gis.db import models
 
-from enhydris.models import Garea
+from enhydris.models import Garea, Gentity
 from enhydris.models import Station as EnhydrisStation
 
 
@@ -112,3 +112,28 @@ class StationBasin(Garea, GGRS87Mixin, BasinMixin):
 
     river_basin = models.ForeignKey(RiverBasin, on_delete=models.CASCADE)
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
+
+
+class SurfaceWaterMixin(models.Model):
+    """Base class for rivers (Watercourse) and lakes (StandingWater)."""
+
+    local_type = models.CharField(max_length=50)
+    man_made = models.BooleanField(blank=True, null=True)
+    river_basin = models.ForeignKey(
+        RiverBasin, on_delete=models.CASCADE, null=True, blank=True
+    )
+
+    class Meta:
+        abstract = True
+
+
+class Watercourse(
+    Gentity, GGRS87Mixin, HydroOrderCodeMixin, ImportedIdMixin, SurfaceWaterMixin
+):
+    min_width = models.FloatField(blank=True, null=True)
+    max_width = models.FloatField(blank=True, null=True)
+
+
+class StandingWater(Garea, GGRS87Mixin, ImportedIdMixin, SurfaceWaterMixin):
+    elevation = models.FloatField(blank=True, null=True)
+    mean_depth = models.FloatField(blank=True, null=True)

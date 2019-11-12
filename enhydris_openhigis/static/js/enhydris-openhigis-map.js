@@ -29,6 +29,8 @@ openhigis.map.setUpBaseLayers = function() {
 openhigis.map.setUpOverlayLayers = function() {
     this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής");
     this.addOpenhiLayer("StationBasins", "Λεκάνες ανάντη σταθμών");
+    this.addOpenhiLayer("Watercourses", "Ποτάμια");
+    this.addOpenhiLayer("StandingWaters", "Λίμνες");
 };
 
 openhigis.map.addOpenhiLayer = function(name, legend) {

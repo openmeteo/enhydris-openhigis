@@ -445,6 +445,214 @@ CREATE TRIGGER StationBasin_delete
     INSTEAD OF DELETE ON StationBasin
     FOR EACH ROW EXECUTE PROCEDURE delete_StationBasin();
 
+/* Watercourses */
+
+DROP VIEW IF EXISTS Watercourse;
+
+CREATE VIEW Watercourse
+    AS SELECT
+        watercourse.imported_id as id,
+        g.name AS geographicalName,
+        g.code AS hydroId,
+        g.last_modified AS beginLifespanVersion,
+        g.remarks,
+        watercourse.geom2100 AS geometry,
+        riverbasin.imported_id AS drainsBasin,
+        CASE WHEN watercourse.man_made IS NULL THEN ''
+             WHEN watercourse.man_made THEN 'manMade'
+             ELSE 'natural'
+             END AS origin,
+        watercourse.hydro_order AS streamOrder,
+        watercourse.hydro_order_scheme AS streamOrderScheme,
+        watercourse.hydro_order_scope AS streamOrderScope,
+        ST_LENGTH(watercourse.geom2100) / 1000 AS length,
+        watercourse.local_type AS localType,
+        watercourse.min_width AS minWidth,
+        watercourse.max_width AS maxWidth
+    FROM
+        enhydris_gentity g
+        INNER JOIN enhydris_openhigis_watercourse watercourse
+            ON watercourse.gentity_ptr_id = g.id
+        LEFT JOIN enhydris_openhigis_riverbasin riverbasin
+            ON watercourse.river_basin_id = riverbasin.garea_ptr_id;
+
+CREATE OR REPLACE FUNCTION insert_into_Watercourse() RETURNS TRIGGER
+AS $$
+DECLARE
+    gentity_id INTEGER;
+    new_river_basin_id INTEGER;
+BEGIN
+    gentity_id = openhigis.insert_into_gentity(NEW);
+    SELECT garea_ptr_id INTO new_river_basin_id
+        FROM enhydris_openhigis_riverbasin
+        WHERE imported_id = NEW.drainsBasin;
+    INSERT INTO enhydris_openhigis_watercourse
+        (gentity_ptr_id, geom2100, river_basin_id, man_made, hydro_order,
+            hydro_order_scheme, hydro_order_scope, imported_id, local_type,
+            min_width, max_width)
+        VALUES (gentity_id, NEW.geometry, new_river_basin_id,
+            NEW.origin = 'manMade', COALESCE(NEW.streamOrder, ''),
+            COALESCE(NEW.streamOrderScheme, ''),
+            COALESCE(NEW.streamOrderScope, ''),
+            NEW.id, COALESCE(NEW.localType, ''), NEW.minWidth, NEW.maxWidth);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER Watercourse_insert
+    INSTEAD OF INSERT ON Watercourse
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_Watercourse();
+
+CREATE OR REPLACE FUNCTION update_Watercourse() RETURNS TRIGGER
+AS $$
+DECLARE
+    gentity_id INTEGER;
+    new_river_basin_id INTEGER;
+BEGIN
+    SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_watercourse
+        WHERE imported_id=OLD.id;
+    SELECT garea_ptr_id INTO new_river_basin_id
+        FROM enhydris_openhigis_riverbasin
+        WHERE imported_id = NEW.drainsBasin;
+    PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
+    UPDATE enhydris_openhigis_watercourse
+    SET
+        geom2100=NEW.geometry,
+        river_basin_id=new_river_basin_id,
+        man_made=(NEW.origin = 'manMade'),
+        hydro_order=COALESCE(NEW.streamOrder, ''),
+        hydro_order_scheme=COALESCE(NEW.streamOrderScheme, ''),
+        hydro_order_scope=COALESCE(NEW.streamOrderScope, ''),
+        local_type=COALESCE(NEW.localType, ''),
+        min_width=NEW.minWidth,
+        max_width=NEW.maxWidth
+        WHERE imported_id=OLD.id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER Watercourse_update
+    INSTEAD OF UPDATE ON Watercourse
+    FOR EACH ROW EXECUTE PROCEDURE update_Watercourse();
+
+CREATE OR REPLACE FUNCTION delete_Watercourse()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE gentity_id INTEGER;
+BEGIN
+    SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_watercourse
+        WHERE imported_id=OLD.id;
+    DELETE FROM enhydris_openhigis_watercourse WHERE gentity_ptr_id=gentity_id;
+    DELETE FROM enhydris_gentity WHERE id=gentity_id;
+    RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER Watercourse_delete
+    INSTEAD OF DELETE ON Watercourse
+    FOR EACH ROW EXECUTE PROCEDURE delete_Watercourse();
+
+/* StandingWater */
+
+DROP VIEW IF EXISTS StandingWater;
+
+CREATE VIEW StandingWater
+    AS SELECT
+        standingwater.imported_id as id,
+        g.name AS geographicalName,
+        g.code AS hydroId,
+        g.last_modified AS beginLifespanVersion,
+        g.remarks,
+        standingwater.geom2100 AS geometry,
+        riverbasin.imported_id AS drainsBasin,
+        CASE WHEN standingwater.man_made IS NULL THEN ''
+             WHEN standingwater.man_made THEN 'manMade'
+             ELSE 'natural'
+             END AS origin,
+        ST_LENGTH(standingwater.geom2100) / 1000 AS length,
+        standingwater.local_type AS localType,
+        standingwater.elevation AS elevation,
+        standingwater.mean_depth AS meanDepth
+    FROM
+        enhydris_gentity g
+        INNER JOIN enhydris_openhigis_standingwater standingwater
+            ON standingwater.garea_ptr_id = g.id
+        LEFT JOIN enhydris_openhigis_riverbasin riverbasin
+            ON standingwater.river_basin_id = riverbasin.garea_ptr_id;
+
+CREATE OR REPLACE FUNCTION insert_into_StandingWater() RETURNS TRIGGER
+AS $$
+DECLARE
+    gentity_id INTEGER;
+    new_river_basin_id INTEGER;
+BEGIN
+    gentity_id = openhigis.insert_into_garea(NEW, 5);
+    SELECT garea_ptr_id INTO new_river_basin_id
+        FROM enhydris_openhigis_riverbasin
+        WHERE imported_id = NEW.drainsBasin;
+    INSERT INTO enhydris_openhigis_standingwater
+        (garea_ptr_id, geom2100, river_basin_id, man_made, imported_id,
+            local_type, elevation, mean_depth)
+        VALUES (gentity_id, NEW.geometry, new_river_basin_id,
+            NEW.origin = 'manMade', NEW.id, COALESCE(NEW.localType, ''),
+            NEW.elevation, NEW.meanDepth);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER StandingWater_insert
+    INSTEAD OF INSERT ON StandingWater
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_StandingWater();
+
+CREATE OR REPLACE FUNCTION update_StandingWater() RETURNS TRIGGER
+AS $$
+DECLARE
+    gentity_id INTEGER;
+    new_river_basin_id INTEGER;
+BEGIN
+    SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_standingwater
+        WHERE imported_id=OLD.id;
+    SELECT garea_ptr_id INTO new_river_basin_id
+        FROM enhydris_openhigis_riverbasin
+        WHERE imported_id = NEW.drainsBasin;
+    PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
+    UPDATE enhydris_openhigis_standingwater
+    SET
+        geom2100=NEW.geometry,
+        river_basin_id=new_river_basin_id,
+        man_made=(NEW.origin = 'manMade'),
+        local_type=COALESCE(NEW.localType, ''),
+        elevation=NEW.elevation,
+        mean_depth=NEW.meanDepth
+        WHERE imported_id=OLD.id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER StandingWater_update
+    INSTEAD OF UPDATE ON StandingWater
+    FOR EACH ROW EXECUTE PROCEDURE update_StandingWater();
+
+CREATE OR REPLACE FUNCTION delete_StandingWater()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE gentity_id INTEGER;
+BEGIN
+    SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_standingwater
+        WHERE imported_id=OLD.id;
+    DELETE FROM enhydris_openhigis_standingwater WHERE garea_ptr_id=gentity_id;
+    DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
+    DELETE FROM enhydris_gentity WHERE id=gentity_id;
+    RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER StandingWater_delete
+    INSTEAD OF DELETE ON StandingWater
+    FOR EACH ROW EXECUTE PROCEDURE delete_StandingWater();
+
 /* Give permissions */
 
 GRANT USAGE ON SCHEMA openhigis TO mapserver, anton;
@@ -457,6 +665,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE
     enhydris_openhigis_riverbasindistrict,
     enhydris_openhigis_stationbasin,
     enhydris_openhigis_station,
+    enhydris_openhigis_watercourse,
+    enhydris_openhigis_standingwater,
     enhydris_garea,
     enhydris_gentity
     TO anton;
