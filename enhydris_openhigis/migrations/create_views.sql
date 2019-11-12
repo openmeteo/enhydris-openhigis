@@ -4,7 +4,7 @@ SET search_path TO openhigis, public;
 
 /* Stations */
 
-DROP VIEW IF EXISTS stations;
+DROP VIEW IF EXISTS station;
 
 CREATE VIEW station
     AS SELECT
