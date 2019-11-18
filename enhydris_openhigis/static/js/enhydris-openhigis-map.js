@@ -33,12 +33,44 @@ openhigis.map.setUpOverlayLayers = function() {
     this.addOpenhiLayer("StandingWaters", "Λίμνες");
 };
 
+/* This is a replacement for BetterWMS's getFeatureInfoUrl() which adds the
+ * feature_count parameter. It is used in addOpenhiLayer() below to monkey patch
+ * layer.getFeatureInfoUrl().
+ */
+openhigis.map.getFeatureInfoUrl = function (latlng) {
+    var point = this._map.latLngToContainerPoint(latlng, this._map.getZoom()),
+        size = this._map.getSize(),
+
+    params = {
+        request: 'GetFeatureInfo',
+        service: 'WMS',
+        srs: 'EPSG:4326',
+        styles: this.wmsParams.styles,
+        transparent: this.wmsParams.transparent,
+        version: this.wmsParams.version,
+        format: this.wmsParams.format,
+        bbox: this._map.getBounds().toBBoxString(),
+        height: size.y,
+        width: size.x,
+        layers: this.wmsParams.layers,
+        query_layers: this.wmsParams.layers,
+        info_format: 'text/html',
+        feature_count: '5',
+    };
+
+    params[params.version === '1.3.0' ? 'i' : 'x'] = point.x;
+    params[params.version === '1.3.0' ? 'j' : 'y'] = point.y;
+
+    return this._url + L.Util.getParamString(params, this._url, true);
+};
+
 openhigis.map.addOpenhiLayer = function(name, legend) {
     var layer = L.tileLayer.betterWms(openhigis.ows_url, {
         layers: name,
         format: "image/png",
         transparent: true,
     });
+    layer.getFeatureInfoUrl = openhigis.map.getFeatureInfoUrl;
     this.layersControl.addOverlay(layer, legend);
 };
 
