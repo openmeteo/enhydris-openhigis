@@ -467,8 +467,8 @@ CREATE VIEW Watercourse
         watercourse.hydro_order_scope AS streamOrderScope,
         ST_LENGTH(watercourse.geom2100) / 1000 AS length,
         watercourse.local_type AS localType,
-        watercourse.min_width AS minWidth,
-        watercourse.max_width AS maxWidth
+        watercourse.min_width AS lowerWidth,
+        watercourse.max_width AS upperWidth
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_watercourse watercourse
@@ -494,7 +494,7 @@ BEGIN
             NEW.origin = 'manMade', COALESCE(NEW.streamOrder, ''),
             COALESCE(NEW.streamOrderScheme, ''),
             COALESCE(NEW.streamOrderScope, ''),
-            NEW.id, COALESCE(NEW.localType, ''), NEW.minWidth, NEW.maxWidth);
+            NEW.id, COALESCE(NEW.localType, ''), NEW.lowerWidth, NEW.upperWidth);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -524,8 +524,8 @@ BEGIN
         hydro_order_scheme=COALESCE(NEW.streamOrderScheme, ''),
         hydro_order_scope=COALESCE(NEW.streamOrderScope, ''),
         local_type=COALESCE(NEW.localType, ''),
-        min_width=NEW.minWidth,
-        max_width=NEW.maxWidth
+        min_width=NEW.lowerWidth,
+        max_width=NEW.upperWidth
         WHERE imported_id=OLD.id;
     RETURN NEW;
 END;

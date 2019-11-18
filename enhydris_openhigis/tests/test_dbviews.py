@@ -498,7 +498,7 @@ class WatercourseSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 INSERT INTO openhigis.Watercourse
                 (geographicalName, hydroId, remarks, geometry, origin, streamOrder,
                 streamOrderScheme, streamOrderScope, id, localType, drainsBasin,
-                minWidth, maxWidth)
+                lowerWidth, upperWidth)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
                 'manMade', '18', 'strahler', 'go figure', 1852, 'ditch', 1851, 2.718,
@@ -596,8 +596,8 @@ class WatercourseUpdateTestCase(
                 geometry='SRID=2100;POINT(550000 4500000)',
                 origin='natural',
                 localType='river',
-                minWidth=1.141,
-                maxWidth=2.282,
+                lowerWidth=1.141,
+                upperWidth=2.282,
                 streamOrder=19,
                 streamOrderScheme='mahler',
                 streamOrderScope='no figure'
