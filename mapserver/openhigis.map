@@ -219,7 +219,7 @@ MAP
         PROJECTION
             "init=epsg:2100"
         END
-        TEMPLATE "wmspopup-general.html"
+        TEMPLATE "wmspopup-river.html"
         CLASS
             NAME "Watercourses"
             STYLE
