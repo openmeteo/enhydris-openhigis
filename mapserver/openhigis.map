@@ -205,7 +205,7 @@ MAP
 
     LAYER
         NAME "Watercourses"
-        TYPE POLYGON
+        TYPE LINE
         CONNECTIONTYPE POSTGIS
         CONNECTION "host=localhost dbname=openmeteo user=mapserver"
         METADATA
