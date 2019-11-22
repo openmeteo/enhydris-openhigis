@@ -27,10 +27,10 @@ openhigis.map.setUpBaseLayers = function() {
 };
 
 openhigis.map.setUpOverlayLayers = function() {
-    this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής");
-    this.addOpenhiLayer("StationBasins", "Λεκάνες ανάντη σταθμών");
-    this.addOpenhiLayer("Watercourses", "Ποτάμια");
-    this.addOpenhiLayer("StandingWaters", "Λίμνες");
+    this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής", true);
+    this.addOpenhiLayer("StationBasins", "Λεκάνες ανάντη σταθμών", false);
+    this.addOpenhiLayer("Watercourses", "Ποτάμια", true);
+    this.addOpenhiLayer("StandingWaters", "Λίμνες", true);
 };
 
 /* This is a replacement for BetterWMS's getFeatureInfoUrl() which adds the
@@ -64,7 +64,7 @@ openhigis.map.getFeatureInfoUrl = function (latlng) {
     return this._url + L.Util.getParamString(params, this._url, true);
 };
 
-openhigis.map.addOpenhiLayer = function(name, legend) {
+openhigis.map.addOpenhiLayer = function(name, legend, initiallyVisible) {
     var layer = L.tileLayer.betterWms(openhigis.ows_url, {
         layers: name,
         format: "image/png",
@@ -72,6 +72,9 @@ openhigis.map.addOpenhiLayer = function(name, legend) {
     });
     layer.getFeatureInfoUrl = openhigis.map.getFeatureInfoUrl;
     this.layersControl.addOverlay(layer, legend);
+    if (initiallyVisible) {
+      layer.addTo(this);
+    };
 };
 
 openhigis.map.setUp();

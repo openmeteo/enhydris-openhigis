@@ -1,5 +1,10 @@
-{% extends "enhydris/base/main.html" %}
+{% extends "enhydris/base/main_with_map.html" %}
 {% load static %}
+
+
+{% block body_onload %}
+{% endblock %}
+
 
 {% block basecss %}
   {{ block.super }}
@@ -8,18 +13,72 @@
   />
 {% endblock %}
 
-{% block mainjs %}
+
+{% block leaflet_plugins %}
   {{ block.super }}
-  <script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js"></script>
-  <script src="{% static "js/L.Control.MousePosition.js"%}"></script>
-  {% block map_js %}
-    <script type="text/javascript">
-      {{ map_js | safe }}
-      var openhigis = {
-          ows_url: "{{ ows_url }}"
-      };
-    </script>
-  {% endblock %}
+  <script type="text/javascript" src="{% static "js/TileLayer.Grayscale.js" %}"></script>
+{% endblock %}
+
+
+{% block map_js %}
+  <script type="text/javascript">
+    enhydris.mapBaseLayers = {
+      "Open Street Map": L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: (
+            'Map data © <a href="https://www.openstreetmap.org/">' +
+            'OpenStreetMap</a> contributors, ' +
+            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+          ),
+          maxZoom: 18,
+        }
+      ),
+      "Open Cycle Map": L.tileLayer(
+        "https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=6ee1510f01024952802dd06a65660b00",
+        {
+          attribution: (
+            'Map data © <a href="https://www.openstreetmap.org/">' +
+            'OpenStreetMap</a> contributors, ' +
+            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+          ),
+          maxZoom: 18,
+        }
+      ),
+      "Open Street Map Grayscale": L.tileLayer.grayscale(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          attribution: (
+            'Map data © <a href="https://www.openstreetmap.org/">' +
+            'OpenStreetMap</a> contributors, ' +
+            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+          ),
+          maxZoom: 18,
+        }
+      ),
+      "Open Cycle Map Grayscale": L.tileLayer.grayscale(
+        "https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=6ee1510f01024952802dd06a65660b00", {
+          attribution: (
+            'Map data © <a href="https://www.openstreetmap.org/">' +
+            'OpenStreetMap</a> contributors, ' +
+            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
+          ),
+          maxZoom: 18,
+        }
+      )
+    };
+    enhydris.mapDefaultBaseLayer = "Open Cycle Map Grayscale";
+    enhydris.mapViewport = {{ map_viewport|safe }};
+    enhydris.mapMarkers = {{ map_markers|safe }};
+    enhydris.searchString = {{ searchString|safe }};
+    var openhigis = {
+        ows_url: "{{ ows_url }}"
+    };
+  </script>
+{% endblock %}
+
+
+{% block extrajs %}
   <script type="text/javascript" src="{% static "js/betterwms.js" %}">
   </script>
   <script type="text/javascript" src="{% static "js/enhydris-openhigis-map.js" %}">
