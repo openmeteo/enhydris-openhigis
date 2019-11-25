@@ -27,10 +27,12 @@ openhigis.map.setUpBaseLayers = function() {
 };
 
 openhigis.map.setUpOverlayLayers = function() {
-    this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής", true);
-    this.addOpenhiLayer("StationBasins", "Λεκάνες ανάντη σταθμών", false);
-    this.addOpenhiLayer("Watercourses", "Ποτάμια", true);
-    this.addOpenhiLayer("StandingWaters", "Λίμνες", true);
+    this.addOpenhiLayer("Watercourses", "Υδρογραφικό δίκτυο", "#33CCFF", "□", true);
+    this.addOpenhiLayer("StandingWaters", "Λίμνες", "#33CCFF", "■", true);
+    this.addOpenhiLayer(
+        "StationBasins", "Λεκάνες ανάντη σταθμών", "#0066FF", "▮", false
+    );
+    this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής", "#0066FF", "▮", true);
 };
 
 /* This is a replacement for BetterWMS's getFeatureInfoUrl() which adds the
@@ -64,13 +66,17 @@ openhigis.map.getFeatureInfoUrl = function (latlng) {
     return this._url + L.Util.getParamString(params, this._url, true);
 };
 
-openhigis.map.addOpenhiLayer = function(name, legend, initiallyVisible) {
+openhigis.map.addOpenhiLayer = function(
+    name, legendText, legendSymbolColor, legendSymbol, initiallyVisible
+) {
     var layer = L.tileLayer.betterWms(openhigis.ows_url, {
         layers: name,
         format: "image/png",
         transparent: true,
     });
     layer.getFeatureInfoUrl = openhigis.map.getFeatureInfoUrl;
+    var legend = '<span style="color: ' + legendSymbolColor + '; font-size: large">'
+        + legendSymbol + '</span> ' + legendText;
     this.layersControl.addOverlay(layer, legend);
     if (initiallyVisible) {
       layer.addTo(this);

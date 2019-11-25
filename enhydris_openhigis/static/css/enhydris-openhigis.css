@@ -17,3 +17,8 @@
 #openhigis-map.leaflet-grab:not(.leaflet-drag-target) {
     cursor: default;  /* Cursor is used both for grabbing and selecting */
 }
+
+#openhigis-map.leaflet-container {
+    background: white;
+    border: 2px solid lightgray;
+}

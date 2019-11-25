@@ -225,7 +225,7 @@ MAP
             STYLE
                 OUTLINECOLOR 51 204 255
                 OPACITY 100
-                WIDTH 1
+                WIDTH [streamorder]
             END
         END
     END

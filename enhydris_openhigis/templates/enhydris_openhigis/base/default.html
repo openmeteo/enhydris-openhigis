@@ -65,7 +65,18 @@
           ),
           maxZoom: 18,
         }
-      )
+      ),
+      "Εθνικό Κτηματολόγιο": L.tileLayer.wms(
+        "http://gis.ktimanet.gr/wms/wmsopen/wmsserver.aspx",
+        {
+          layers: "KTBASEMAP",
+          format: "image/png",
+          attribution: (
+            "Χαρτογραφικά δεδομένα © Εθνικό Κτηματολόγιο & Χαρτογράφηση Α.Ε."
+          ),
+        },
+      ),
+      "Χωρίς υπόβαθρο": L.tileLayer(""),
     };
     enhydris.mapDefaultBaseLayer = "Open Cycle Map Grayscale";
     enhydris.mapViewport = {{ map_viewport|safe }};
