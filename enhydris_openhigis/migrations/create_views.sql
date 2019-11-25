@@ -573,7 +573,8 @@ CREATE VIEW StandingWater
         ST_LENGTH(standingwater.geom2100) / 1000 AS length,
         standingwater.local_type AS localType,
         standingwater.elevation AS elevation,
-        standingwater.mean_depth AS meanDepth
+        standingwater.mean_depth AS meanDepth,
+        ST_Area(standingwater.geom2100) / 1000000 AS area
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_standingwater standingwater
