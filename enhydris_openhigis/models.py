@@ -116,7 +116,7 @@ class StationBasin(Garea, GGRS87Mixin, BasinMixin):
     station = models.ForeignKey(Station, on_delete=models.CASCADE)
 
 
-class SurfaceWaterMixin(models.Model):
+class SurfaceWater(Gentity, GGRS87Mixin, ImportedIdMixin):
     """Base class for rivers (Watercourse) and lakes (StandingWater)."""
 
     local_type = models.CharField(max_length=50)
@@ -125,17 +125,12 @@ class SurfaceWaterMixin(models.Model):
         RiverBasin, on_delete=models.CASCADE, null=True, blank=True
     )
 
-    class Meta:
-        abstract = True
 
-
-class Watercourse(
-    Gentity, GGRS87Mixin, HydroOrderCodeMixin, ImportedIdMixin, SurfaceWaterMixin
-):
+class Watercourse(SurfaceWater, HydroOrderCodeMixin):
     min_width = models.FloatField(blank=True, null=True)
     max_width = models.FloatField(blank=True, null=True)
 
 
-class StandingWater(Garea, GGRS87Mixin, ImportedIdMixin, SurfaceWaterMixin):
+class StandingWater(SurfaceWater):
     elevation = models.FloatField(blank=True, null=True)
     mean_depth = models.FloatField(blank=True, null=True)
