@@ -90,13 +90,15 @@ class BasinMixin(models.Model):
         abstract = True
 
 
-class RiverBasin(Garea, GGRS87Mixin, ImportedIdMixin, BasinMixin):
+class Basin(Garea, GGRS87Mixin, ImportedIdMixin, BasinMixin):
     pass
 
 
-class DrainageBasin(
-    Garea, GGRS87Mixin, HydroOrderCodeMixin, ImportedIdMixin, BasinMixin
-):
+class RiverBasin(Basin):
+    pass
+
+
+class DrainageBasin(Basin, HydroOrderCodeMixin):
     """A subbasin.
 
     We use the term "DrainageBasin" differently from INSPIRE. Read the "BasinMixin"
