@@ -10,6 +10,14 @@ MAP
     CONFIG MS_ERRORFILE "/var/log/mapserver/openhigis.log"
 
     OUTPUTFORMAT
+      NAME "geojson"
+      DRIVER OGR/GEOJSON
+      MIMETYPE "application/json; subtype=geojson"
+      FORMATOPTION "STORAGE=stream"
+      FORMATOPTION "FORM=SIMPLE"
+      FORMATOPTION "LCO:RFC7946=YES"
+    END
+    OUTPUTFORMAT
       NAME "png"
       DRIVER AGG/PNG
       MIMETYPE "image/png"
@@ -258,4 +266,25 @@ MAP
         END
     END
 
+    LAYER
+        NAME "Stations"
+        TYPE POINT
+        CONNECTIONTYPE POSTGIS
+        CONNECTION "host=localhost dbname=openmeteo user=mapserver"
+        METADATA
+            "wms_title" "Stations"
+            "wfs_title" "Stations"
+            "gml_include_items" "all"
+            "gml_featureid" "id"
+            "wfs_getfeature_formatlist" "gml,geojson"
+        END
+        STATUS ON
+        DATA "geometry FROM openhigis.Station USING UNIQUE id USING SRID=2100"
+        PROJECTION
+            "init=epsg:2100"
+        END
+        CLASS
+            NAME "Stations"
+        END
+    END
 END

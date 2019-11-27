@@ -26,13 +26,47 @@ openhigis.map.setUpBaseLayers = function() {
     enhydris.mapBaseLayers[enhydris.mapDefaultBaseLayer].addTo(this);
 };
 
-openhigis.map.setUpOverlayLayers = function() {
+openhigis.map.setUpOverlayLayers = async function() {
+    await this.addStationsLayer();
     this.addOpenhiLayer("Watercourses", "Υδρογραφικό δίκτυο", "#33CCFF", "□", true);
     this.addOpenhiLayer("StandingWaters", "Λίμνες", "#33CCFF", "■", true);
     this.addOpenhiLayer(
         "StationBasins", "Λεκάνες ανάντη σταθμών", "#0066FF", "▮", false
     );
     this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής", "#0066FF", "▮", true);
+};
+
+openhigis.map.addStationsLayer = async function() {
+    var url = openhigis.ows_url + L.Util.getParamString(
+        {
+            service: "WFS",
+            version: "1.1.0",
+            request: "GetFeature",
+            outputFormat: "geojson",
+            typeName: "stations",
+            maxFeatures: "500",
+        },
+        openhigis.ows_url,
+    );
+    var response = await fetch(url);
+    var text = await response.text();
+    var data = await JSON.parse(text);
+    var layer = L.geoJSON(
+        data,
+        {
+            pointToLayer: (feature, latlng) => L.marker(latlng, {}),
+            onEachFeature: (feature, layer) => {
+                var name = feature.properties.name;
+                var id = feature.properties.id;
+                layer.bindPopup(
+                    "<p>Σταθμός <b>" + name + "</b></p>" +
+                    '<p><a href="/stations/' + id + '/">Λεπτομέρειες...</a></p>'
+                );
+            },
+        },
+    );
+    this.layersControl.addOverlay(layer, "Σταθμοί");
+    layer.addTo(this);
 };
 
 /* This is a replacement for BetterWMS's getFeatureInfoUrl() which adds the

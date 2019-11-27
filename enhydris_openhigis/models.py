@@ -62,7 +62,10 @@ class HydroOrderCodeMixin(models.Model):
 
 
 class Station(EnhydrisStation, GGRS87Mixin):
-    pass
+    basin = models.ForeignKey("Basin", on_delete=models.CASCADE, null=True, blank=True)
+    surface_water = models.ForeignKey(
+        "SurfaceWater", on_delete=models.CASCADE, null=True, blank=True
+    )
 
 
 class RiverBasinDistrict(Garea, GGRS87Mixin, ImportedIdMixin):

@@ -11,26 +11,60 @@ CREATE VIEW station
         g.id,
         g.name,
         g.remarks,
+        g.code as hydroId,
         gs.geom2100 AS geometry,
-        gp.altitude,
-        s.owner_id,
-        s.is_automatic,
-        s.start_date,
-        s.end_date,
-        s.overseer,
-        s.copyright_years,
-        s.copyright_holder
+        gp.altitude AS elevation,
+        s.owner_id AS responsibleParty,
+        basin.imported_id AS basin,
+        surfacewater.imported_id AS surfaceWater
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_gpoint gp ON gp.gentity_ptr_id = g.id
         INNER JOIN enhydris_station s ON s.gpoint_ptr_id = g.id
-        INNER JOIN enhydris_openhigis_station gs ON gs.station_ptr_id = g.id;
+        INNER JOIN enhydris_openhigis_station gs ON gs.station_ptr_id = g.id
+        LEFT JOIN enhydris_openhigis_basin basin ON basin.garea_ptr_id = gs.basin_id
+        LEFT JOIN enhydris_openhigis_surfacewater surfacewater
+            ON surfacewater.gentity_ptr_id = gs.surface_water_id;
+
+CREATE OR REPLACE FUNCTION insert_into_station() RETURNS TRIGGER
+AS $$
+DECLARE
+  new_basin_id INTEGER;
+  new_surface_water_id INTEGER;
+BEGIN
+    SELECT garea_ptr_id INTO new_basin_id FROM enhydris_openhigis_basin
+        WHERE imported_id = NEW.basin;
+    SELECT gentity_ptr_id INTO new_surface_water_id
+        FROM enhydris_openhigis_surfacewater
+        WHERE imported_id = NEW.surfacewater;
+    INSERT INTO enhydris_openhigis_station
+        (station_ptr_id, geom2100, basin_id, surface_water_id)
+        VALUES (NEW.id, NEW.geometry, new_basin_id, new_surface_water_id);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER Station_insert
+    INSTEAD OF INSERT ON Station
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_Station();
 
 CREATE OR REPLACE FUNCTION update_station() RETURNS TRIGGER
 AS $$
+DECLARE
+  new_basin_id INTEGER;
+  new_surface_water_id INTEGER;
 BEGIN
-    UPDATE enhydris_openhigis_station SET geom2100=NEW.geometry
-    WHERE station_ptr_id=OLD.id;
+    SELECT garea_ptr_id INTO new_basin_id FROM enhydris_openhigis_basin
+        WHERE imported_id = NEW.basin;
+    SELECT gentity_ptr_id INTO new_surface_water_id
+        FROM enhydris_openhigis_surfacewater
+        WHERE imported_id = NEW.surfacewater;
+    UPDATE enhydris_openhigis_station
+        SET
+            geom2100=NEW.geometry,
+            basin_id=new_basin_id,
+            surface_water_id=new_surface_water_id
+        WHERE station_ptr_id=OLD.id;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -38,6 +72,20 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER station_update
     INSTEAD OF UPDATE ON station
     FOR EACH ROW EXECUTE PROCEDURE update_station();
+
+CREATE OR REPLACE FUNCTION delete_Station()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    DELETE FROM enhydris_openhigis_station WHERE station_ptr_id=OLD.id;
+    RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER Station_delete
+    INSTEAD OF DELETE ON Station
+    FOR EACH ROW EXECUTE PROCEDURE delete_Station();
 
 /* Functions common to all tables */
 

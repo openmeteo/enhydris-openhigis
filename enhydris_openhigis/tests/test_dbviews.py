@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from model_mommy import mommy
 
+from enhydris import models as enhydris_models
 from enhydris_openhigis import models
 
 
@@ -147,7 +148,7 @@ class RiverBasinSetupInitialRowMixin:
                 'manMade', 0.15, 200, 1851)
                 """
             )
-        self.expected_river_basin_id = models.RiverBasin.objects.first().id
+        self.expected_basin_id = models.RiverBasin.objects.first().id
 
 
 class DrainageBasinSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
@@ -518,7 +519,7 @@ class SurfaceWaterTestsMixin:
 
     def test_basin(self):
         self.assertEqual(
-            self.model.objects.first().river_basin.id, self.expected_river_basin_id
+            self.model.objects.first().river_basin.id, self.expected_basin_id
         )
 
 
@@ -634,6 +635,7 @@ class StandingWaterSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 'manMade', 1852, 'pool', 1851, 784.1, 18.7)
                 """
             )
+        self.expected_surface_water_id = models.StandingWater.objects.first().id
 
 
 class StandingWaterTestsMixin:
@@ -722,4 +724,113 @@ class StandingWaterDeleteTestCase(
 class StandingWaterSridTestCase(SridMixin, StandingWaterSetupInitialRowMixin, TestCase):
     model = models.StandingWater
     view_name = "StandingWater"
+    condition = "remarks = 'Hello world'"
+
+
+class StationSetupInitialRowMixin(StandingWaterSetupInitialRowMixin):
+    def setUp(self):
+        super().setUp()
+        self.station = mommy.make(
+            enhydris_models.Station,
+            id=42,
+            name="Hobbiton",
+            owner=mommy.make(enhydris_models.Organization, name="Hobbits, Inc"),
+            code="BETA18",
+            remarks="Hello world",
+            geom="SRID=4326;POINT(24.1 38.2)",
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO openhigis.Station (id, geometry, basin, surfacewater) "
+                "VALUES (42, 'SRID=2100;POINT(500000 4000000)', 1851, 1852);"
+            )
+
+
+class StationAdditionalTestsMixin:
+    def test_geom2100_x(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().geom2100.x, self.expected_geom2100_x
+        )
+
+    def test_geom2100_y(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().geom2100.y, self.expected_geom2100_y
+        )
+
+    def test_basin(self):
+        self.assertEqual(self.model.objects.first().basin_id, self.expected_basin_id)
+
+    def test_surface_water(self):
+        self.assertEqual(
+            self.model.objects.first().surface_water_id, self.expected_surface_water_id
+        )
+
+
+class StationInsertTestCase(
+    EssentialTestsMixin,
+    StationSetupInitialRowMixin,
+    StationAdditionalTestsMixin,
+    TestCase,
+):
+    model = models.Station
+    view_name = "Station"
+    expected_count = 1
+    expected_name = "Hobbiton"
+    expected_code = "BETA18"
+    expected_remarks = "Hello world"
+    expected_x = 24.1
+    expected_y = 38.2
+    expected_geom2100_x = 500000
+    expected_geom2100_y = 4000000
+
+
+class StationUpdateTestCase(
+    EssentialTestsMixin,
+    StationSetupInitialRowMixin,
+    StationAdditionalTestsMixin,
+    TestCase,
+):
+    model = models.Station
+    view_name = "Station"
+    expected_count = 1
+    expected_name = "Hobbiton"
+    expected_code = "BETA18"
+    expected_remarks = "Hello world"
+    expected_x = 24.1
+    expected_y = 38.2
+    expected_geom2100_x = 570000
+    expected_geom2100_y = 4570000
+
+    def setUp(self):
+        super().setUp()
+        with connection.cursor() as cursor:
+            # Attributes stored in enhydris Gentity, Gpoint and Station should be
+            # ignored; only the ones stored in openhigis Station should be updated.
+            cursor.execute(
+                """
+                UPDATE openhigis.{}
+                SET
+                name='Epirus',
+                hydroId='08',
+                remarks='Hello planet',
+                geometry='SRID=2100;POINT(570000 4570000)'
+                WHERE remarks='Hello world'
+                """.format(
+                    self.view_name
+                )
+            )
+
+
+class StationDeleteTestCase(DeleteMixin, StationSetupInitialRowMixin, TestCase):
+    model = models.Station
+    view_name = "Station"
+    condition = "remarks = 'Hello world'"
+
+    def test_enhydris_station_should_not_be_touched(self):
+        self.assertEqual(enhydris_models.Station.objects.count(), 1)
+
+
+class StationSridTestCase(SridMixin, StationSetupInitialRowMixin, TestCase):
+    model = models.Station
+    view_name = "Station"
     condition = "remarks = 'Hello world'"
