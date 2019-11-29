@@ -45,6 +45,7 @@ openhigis.map.addStationsLayer = async function() {
             outputFormat: "geojson",
             typeName: "stations",
             maxFeatures: "500",
+            srsName: "EPSG:4326",
         },
         openhigis.ows_url,
     );
