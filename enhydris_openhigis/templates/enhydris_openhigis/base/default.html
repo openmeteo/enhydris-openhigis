@@ -56,16 +56,6 @@
           maxZoom: 18,
         }
       ),
-      "Open Cycle Map Grayscale": L.tileLayer.grayscale(
-        "https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=6ee1510f01024952802dd06a65660b00", {
-          attribution: (
-            'Map data © <a href="https://www.openstreetmap.org/">' +
-            'OpenStreetMap</a> contributors, ' +
-            '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>'
-          ),
-          maxZoom: 18,
-        }
-      ),
       "Εθνικό Κτηματολόγιο": L.tileLayer.wms(
         "http://gis.ktimanet.gr/wms/wmsopen/wmsserver.aspx",
         {
@@ -78,7 +68,7 @@
       ),
       "Χωρίς υπόβαθρο": L.tileLayer(""),
     };
-    enhydris.mapDefaultBaseLayer = "Open Cycle Map Grayscale";
+    enhydris.mapDefaultBaseLayer = "Open Street Map Grayscale";
     enhydris.mapViewport = {{ map_viewport|safe }};
     enhydris.mapMarkers = {{ map_markers|safe }};
     enhydris.searchString = {{ searchString|safe }};

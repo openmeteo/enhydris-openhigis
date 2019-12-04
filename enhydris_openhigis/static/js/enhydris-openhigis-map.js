@@ -28,7 +28,7 @@ openhigis.map.setUpBaseLayers = function() {
 
 openhigis.map.setUpOverlayLayers = async function() {
     await this.addStationsLayer();
-    this.addOpenhiLayer("Watercourses", "Υδρογραφικό δίκτυο", "#33CCFF", "□", true);
+    this.addOpenhiLayer("Watercourses", "Υδρογραφικό δίκτυο", "#33CCFF", "⌇", true);
     this.addOpenhiLayer("StandingWaters", "Λίμνες", "#33CCFF", "■", true);
     this.addOpenhiLayer(
         "StationBasins", "Λεκάνες ανάντη σταθμών", "#0066FF", "▮", false
