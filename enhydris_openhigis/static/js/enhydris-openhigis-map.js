@@ -118,4 +118,30 @@ openhigis.map.addOpenhiLayer = function(
     };
 };
 
+openhigis.map.search = function() {
+    var search_text = document.getElementById("search_input").value.trim();
+    if (search_text === "") {
+        return;
+    }
+    var xhr = new XMLHttpRequest();
+    var search_result = [];
+    xhr.onload = function() {
+        if (xhr.status < 200 || xhr.status > 299) {
+            return;
+        }
+        search_result = xhr.responseText.split(" ").map(x => parseFloat(x));
+        openhigis.map.zoomTo(search_result);
+    };
+    xhr.open("GET", openhigis.base_url + "search/" + search_text);
+    xhr.send();
+    return false;
+};
+
+openhigis.map.zoomTo = function(search_result) {
+    this.fitBounds([
+        [search_result[1], search_result[0]],
+        [search_result[3], search_result[2]],
+    ]);
+}
+
 openhigis.map.setUp();

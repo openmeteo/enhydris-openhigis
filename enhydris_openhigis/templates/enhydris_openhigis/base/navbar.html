@@ -1,0 +1,19 @@
+{% extends "enhydris/base/navbar.html" %}
+{% load i18n %}
+
+
+{% block search %}
+  <form class="navbar-form navbar-left" onsubmit="return openhigis.map.search();">
+    <div class="form-group">
+      <div class="input-group">
+        <input id="search_input" type="text" name="q"
+          value="{{ query|escape }}" class="form-control"
+          placeholder="{% trans 'Search' %}">
+        <input type="hidden" name="check" value="search" />
+        <div class="input-group-btn">
+          <button class="btn btn-primary btn-block glyphicon glyphicon-search"></button>
+        </div>
+      </div>
+    </div>
+  </form>
+{% endblock %}

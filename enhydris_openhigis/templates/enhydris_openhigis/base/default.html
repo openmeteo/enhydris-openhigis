@@ -2,15 +2,22 @@
 {% load static %}
 
 
-{% block body_onload %}
-{% endblock %}
-
-
 {% block basecss %}
   {{ block.super }}
   <link href="{% static "css/enhydris-openhigis.css" %}" type="text/css"
         rel="stylesheet"
   />
+{% endblock %}
+
+
+{% block body_onload %}
+{% endblock %}
+
+
+{% block header %}
+  {% include "enhydris_openhigis/base/navbar.html" %}
+  {% include "enhydris/base/searchtips.html" %}
+  {% include "enhydris/base/messages.html" %}
 {% endblock %}
 
 
@@ -73,7 +80,8 @@
     enhydris.mapMarkers = {{ map_markers|safe }};
     enhydris.searchString = {{ searchString|safe }};
     var openhigis = {
-        ows_url: "{{ ows_url }}"
+        base_url: "{{ base_url }}",
+        ows_url: "{{ ows_url }}",
     };
   </script>
 {% endblock %}
