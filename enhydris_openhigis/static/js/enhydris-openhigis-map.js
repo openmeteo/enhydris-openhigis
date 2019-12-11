@@ -33,7 +33,7 @@ openhigis.map.setUpOverlayLayers = async function() {
     this.addOpenhiLayer(
         "StationBasins", "Λεκάνες ανάντη σταθμών", "#0066FF", "▮", false
     );
-    this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής", "#0066FF", "▮", true);
+    this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής", "#0066FF", "▮", false);
 };
 
 openhigis.map.addStationsLayer = async function() {
