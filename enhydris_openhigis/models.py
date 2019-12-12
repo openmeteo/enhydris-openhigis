@@ -1,6 +1,6 @@
 from django.contrib.gis.db import models
 
-from enhydris.models import Garea, Gentity
+from enhydris.models import Garea, Gentity, Gpoint
 from enhydris.models import Station as EnhydrisStation
 
 
@@ -129,9 +129,27 @@ class SurfaceWater(Gentity, GGRS87Mixin, ImportedIdMixin):
     )
 
 
+class HydroNode(Gpoint, GGRS87Mixin, ImportedIdMixin):
+    pass
+
+
 class Watercourse(SurfaceWater, HydroOrderCodeMixin):
     min_width = models.FloatField(blank=True, null=True)
     max_width = models.FloatField(blank=True, null=True)
+    start_node = models.ForeignKey(
+        HydroNode,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="watercourses_starting",
+    )
+    end_node = models.ForeignKey(
+        HydroNode,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="watercourses_ending",
+    )
 
 
 class StandingWater(SurfaceWater):

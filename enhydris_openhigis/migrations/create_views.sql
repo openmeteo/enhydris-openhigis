@@ -116,6 +116,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION insert_into_gpoint(NEW ANYELEMENT) RETURNS integer
+AS $$
+DECLARE gentity_id INTEGER;
+BEGIN
+    gentity_id = openhigis.insert_into_gentity(NEW);
+    INSERT INTO enhydris_gpoint (gentity_ptr_id, altitude)
+        VALUES (gentity_id, NEW.elevation);
+    RETURN gentity_id;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION update_gentity(gentity_id INTEGER, OLD ANYELEMENT, NEW ANYELEMENT)
 RETURNS void
 AS $$
@@ -571,7 +582,9 @@ CREATE VIEW Watercourse
         ST_LENGTH(surfacewater.geom2100) / 1000 AS length,
         surfacewater.local_type AS localType,
         watercourse.min_width AS lowerWidth,
-        watercourse.max_width AS upperWidth
+        watercourse.max_width AS upperWidth,
+        start_node.imported_id AS startNode,
+        end_node.imported_id AS endNode
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_surfacewater surfacewater
@@ -581,23 +594,34 @@ CREATE VIEW Watercourse
         LEFT JOIN enhydris_openhigis_riverbasin riverbasin
             ON surfacewater.river_basin_id = riverbasin.basin_ptr_id
         LEFT JOIN enhydris_openhigis_basin riverbasin_basin
-            ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id;
+            ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id
+        LEFT JOIN enhydris_openhigis_hydronode start_node
+            ON watercourse.start_node_id = start_node.imported_id
+        LEFT JOIN enhydris_openhigis_hydronode end_node
+            ON watercourse.start_node_id = end_node.imported_id;
 
 
 CREATE OR REPLACE FUNCTION insert_into_Watercourse() RETURNS TRIGGER
 AS $$
-DECLARE gentity_id INTEGER;
+DECLARE
+    gentity_id INTEGER;
+    new_start_node_id INTEGER;
+    new_end_node_id INTEGER;
 BEGIN
     gentity_id = openhigis.insert_into_gentity(NEW);
+    SELECT gpoint_ptr_id INTO new_start_node_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.startNode;
+    SELECT gpoint_ptr_id INTO new_end_node_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.endNode;
     PERFORM openhigis.insert_into_surfacewater(gentity_id, NEW);
     INSERT INTO enhydris_openhigis_watercourse
         (surfacewater_ptr_id, hydro_order, hydro_order_scheme, hydro_order_scope,
-            min_width, max_width)
+            min_width, max_width, start_node_id, end_node_id)
         VALUES (gentity_id,
             COALESCE(NEW.streamOrder, ''),
             COALESCE(NEW.streamOrderScheme, ''),
             COALESCE(NEW.streamOrderScope, ''),
-            NEW.lowerWidth, NEW.upperWidth);
+            NEW.lowerWidth, NEW.upperWidth, new_start_node_id, new_end_node_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -608,19 +632,28 @@ CREATE TRIGGER Watercourse_insert
 
 CREATE OR REPLACE FUNCTION update_Watercourse() RETURNS TRIGGER
 AS $$
-DECLARE gentity_id INTEGER;
+DECLARE
+    gentity_id INTEGER;
+    new_start_node_id INTEGER;
+    new_end_node_id INTEGER;
 BEGIN
     SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_surfacewater
         WHERE imported_id=OLD.id;
     PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     PERFORM openhigis.update_surfacewater(gentity_id, OLD, NEW);
+    SELECT gpoint_ptr_id INTO new_start_node_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.startNode;
+    SELECT gpoint_ptr_id INTO new_end_node_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.endNode;
     UPDATE enhydris_openhigis_watercourse
     SET
         hydro_order=COALESCE(NEW.streamOrder, ''),
         hydro_order_scheme=COALESCE(NEW.streamOrderScheme, ''),
         hydro_order_scope=COALESCE(NEW.streamOrderScope, ''),
         min_width=NEW.lowerWidth,
-        max_width=NEW.upperWidth
+        max_width=NEW.upperWidth,
+        start_node_id=new_start_node_id,
+        end_node_id=new_end_node_id
         WHERE surfacewater_ptr_id=gentity_id;
     RETURN NEW;
 END;
@@ -739,6 +772,79 @@ CREATE TRIGGER StandingWater_delete
     INSTEAD OF DELETE ON StandingWater
     FOR EACH ROW EXECUTE PROCEDURE delete_StandingWater();
 
+/* Nodes */
+
+DROP VIEW IF EXISTS HydroNode;
+
+CREATE VIEW HydroNode
+    AS SELECT
+        hn.imported_id AS id,
+        g.name as geographicalName,
+        g.remarks,
+        g.code as hydroId,
+        hn.geom2100 AS geometry,
+        gp.altitude AS elevation
+    FROM
+        enhydris_gentity g
+        INNER JOIN enhydris_gpoint gp ON gp.gentity_ptr_id = g.id
+        INNER JOIN enhydris_openhigis_hydronode hn ON hn.gpoint_ptr_id = g.id;
+
+CREATE OR REPLACE FUNCTION insert_into_HydroNode() RETURNS TRIGGER
+AS $$
+DECLARE gentity_id INTEGER;
+BEGIN
+    gentity_id = openhigis.insert_into_gpoint(NEW);
+    INSERT INTO enhydris_openhigis_hydronode
+        (gpoint_ptr_id, geom2100, imported_id)
+        VALUES (gentity_id, NEW.geometry, NEW.id);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER HydroNode_insert
+    INSTEAD OF INSERT ON HydroNode
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_HydroNode();
+
+CREATE OR REPLACE FUNCTION update_HydroNode() RETURNS TRIGGER
+AS $$
+DECLARE gentity_id INTEGER;
+BEGIN
+    SELECT gpoint_ptr_id INTO gentity_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=OLD.id;
+    PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
+    UPDATE enhydris_gpoint
+        SET altitude=NEW.elevation
+        WHERE gentity_ptr_id=gentity_id;
+    UPDATE enhydris_openhigis_hydronode
+        SET geom2100=NEW.geometry
+        WHERE imported_id=OLD.id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER HydroNode_update
+    INSTEAD OF UPDATE ON HydroNode
+    FOR EACH ROW EXECUTE PROCEDURE update_HydroNode();
+
+CREATE OR REPLACE FUNCTION delete_HydroNode()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE gentity_id INTEGER;
+BEGIN
+    SELECT gpoint_ptr_id INTO gentity_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=OLD.id;
+    DELETE FROM enhydris_openhigis_hydronode WHERE gpoint_ptr_id=gentity_id;
+    DELETE FROM enhydris_gpoint WHERE gentity_ptr_id=gentity_id;
+    DELETE FROM enhydris_gentity WHERE id=gentity_id;
+    RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER HydroNode_delete
+    INSTEAD OF DELETE ON HydroNode
+    FOR EACH ROW EXECUTE PROCEDURE delete_HydroNode();
+
 /* Give permissions */
 
 GRANT USAGE ON SCHEMA openhigis TO mapserver, anton;
@@ -755,6 +861,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE
     enhydris_openhigis_surfacewater,
     enhydris_openhigis_watercourse,
     enhydris_openhigis_standingwater,
+    enhydris_openhigis_hydronode,
     enhydris_garea,
+    enhydris_gpoint,
     enhydris_gentity
     TO anton;

@@ -20,6 +20,7 @@ class GetAllGeomodelsTestCase(TestCase):
                 models.Station,
                 models.StationBasin,
                 models.Watercourse,
+                models.HydroNode,
             },
         )
 

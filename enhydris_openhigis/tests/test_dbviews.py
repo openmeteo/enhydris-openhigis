@@ -137,6 +137,7 @@ class RiverBasinDistrictSridTestCase(
 
 class RiverBasinSetupInitialRowMixin:
     def setUp(self):
+        super().setUp()
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -490,7 +491,88 @@ class StationBasinSridTestCase(SridMixin, StationBasinSetupInitialRowMixin, Test
     condition = "remarks = 'Hello world'"
 
 
-class WatercourseSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
+class HydroNodeSetupInitialRowMixin:
+    def setUp(self):
+        super().setUp()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.HydroNode
+                (geographicalName, hydroId, remarks, geometry, id, elevation)
+                VALUES
+                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1901,
+                 782.5)
+                """
+            )
+
+
+class HydroNodeAdditionalTestsMixin:
+    def test_elevation(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().altitude, self.expected_altitude
+        )
+
+
+class HydroNodeInsertTestCase(
+    EssentialTestsMixin,
+    HydroNodeAdditionalTestsMixin,
+    HydroNodeSetupInitialRowMixin,
+    TestCase,
+):
+    model = models.HydroNode
+    view_name = "HydroNode"
+    expected_count = 1
+    expected_name = "Attica"
+    expected_code = "06"
+    expected_remarks = "Hello world"
+    expected_x = 24.00166
+    expected_y = 36.14732
+    expected_altitude = 782.5
+
+
+class HydroNodeUpdateTestCase(
+    EssentialTestsMixin,
+    HydroNodeAdditionalTestsMixin,
+    HydroNodeSetupInitialRowMixin,
+    TestCase,
+):
+    model = models.HydroNode
+    view_name = "HydroNode"
+    expected_count = 1
+    expected_name = "Epirus"
+    expected_code = "08"
+    expected_remarks = "Hello planet"
+    expected_x = 24.59318
+    expected_y = 40.65191
+    expected_altitude = 783.6
+
+    def setUp(self):
+        super().setUp()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE openhigis.HydroNode
+                SET geographicalName='Epirus', hydroId='08', remarks='Hello planet',
+                geometry='SRID=2100;POINT(550000 4500000)', elevation=783.6
+                WHERE geographicalName='Attica'
+                """
+            )
+
+
+class HydroNodeDeleteTestCase(DeleteMixin, HydroNodeSetupInitialRowMixin, TestCase):
+    model = models.HydroNode
+    view_name = "HydroNode"
+
+
+class HydroNodeSridTestCase(SridMixin, HydroNodeSetupInitialRowMixin, TestCase):
+    model = models.HydroNode
+    view_name = "HydroNode"
+    condition = "remarks = 'Hello world'"
+
+
+class WatercourseSetupInitialRowMixin(
+    RiverBasinSetupInitialRowMixin, HydroNodeSetupInitialRowMixin
+):
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
@@ -499,11 +581,11 @@ class WatercourseSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 INSERT INTO openhigis.Watercourse
                 (geographicalName, hydroId, remarks, geometry, origin, streamOrder,
                 streamOrderScheme, streamOrderScope, id, localType, drainsBasin,
-                lowerWidth, upperWidth)
+                lowerWidth, upperWidth, startNode, endNode)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
                 'manMade', '18', 'strahler', 'go figure', 1852, 'ditch', 1851, 2.718,
-                3.142)
+                3.142, NULL, 1901)
                 """
             )
 
@@ -534,6 +616,16 @@ class WatercourseTestsMixin:
             self.model.objects.first().max_width, self.expected_max_width
         )
 
+    def test_start_node(self):
+        self.assertEqual(
+            self.model.objects.first().start_node_id, self.expected_start_node_id
+        )
+
+    def test_end_node(self):
+        self.assertEqual(
+            self.model.objects.first().end_node_id, self.expected_end_node_id
+        )
+
 
 class WatercourseInsertTestCase(
     EssentialTestsMixin,
@@ -558,6 +650,11 @@ class WatercourseInsertTestCase(
     expected_hydro_order = "18"
     expected_hydro_order_scheme = "strahler"
     expected_hydro_order_scope = "go figure"
+    expected_start_node_id = None
+
+    @property
+    def expected_end_node_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
 
 class WatercourseUpdateTestCase(
@@ -583,6 +680,11 @@ class WatercourseUpdateTestCase(
     expected_hydro_order = "19"
     expected_hydro_order_scheme = "mahler"
     expected_hydro_order_scope = "no figure"
+    expected_end_node_id = None
+
+    @property
+    def expected_start_node_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
     def setUp(self):
         super().setUp()
@@ -601,7 +703,9 @@ class WatercourseUpdateTestCase(
                 upperWidth=2.282,
                 streamOrder=19,
                 streamOrderScheme='mahler',
-                streamOrderScope='no figure'
+                streamOrderScope='no figure',
+                startNode=1901,
+                endNode=NULL
                 WHERE remarks='Hello world'
                 """.format(
                     self.view_name
