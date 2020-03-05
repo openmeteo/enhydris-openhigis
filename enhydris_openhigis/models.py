@@ -116,7 +116,7 @@ class StationBasin(Garea, GGRS87Mixin, BasinMixin):
     """A subbasin defined by a measuring station."""
 
     river_basin = models.ForeignKey(RiverBasin, on_delete=models.CASCADE)
-    station = models.ForeignKey(Station, on_delete=models.CASCADE)
+    station = models.OneToOneField(Station, on_delete=models.CASCADE)
 
 
 class SurfaceWater(Gentity, GGRS87Mixin, ImportedIdMixin):
