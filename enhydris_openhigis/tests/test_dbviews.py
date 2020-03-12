@@ -143,10 +143,10 @@ class RiverBasinSetupInitialRowMixin:
                 """
                 INSERT INTO openhigis.RiverBasin
                 (geographicalName, hydroId, remarks, geometry, origin, meanSlope,
-                meanElevation, id)
+                meanElevation, maxRiverLength, id)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', 0.15, 200, 1851)
+                'manMade', 0.15, 200, 27.5, 1851)
                 """
             )
         self.expected_basin_id = models.RiverBasin.objects.first().id
@@ -161,10 +161,11 @@ class DrainageBasinSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 INSERT INTO openhigis.DrainageBasin
                 (geographicalName, hydroId, remarks, geometry, origin, basinOrder,
                 basinOrderScheme, basinOrderScope, totalArea, meanSlope, meanElevation,
-                id, riverBasin)
+                maxRiverLength, id, riverBasin)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 1852, 1851)
+                'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 27.5, 1852,
+                1851)
                 """
             )
 
@@ -181,6 +182,11 @@ class BasinsAdditionalTestsMixin:
     def test_mean_elevation(self):
         self.assertAlmostEqual(
             self.model.objects.first().mean_elevation, self.expected_mean_elevation
+        )
+
+    def test_max_river_length(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().max_river_length, self.expected_max_river_length
         )
 
 
@@ -241,6 +247,7 @@ class DrainageBasinInsertTestCase(
     expected_total_area = 680
     expected_mean_slope = 0.15
     expected_mean_elevation = 200
+    expected_max_river_length = 27.5
     expected_imported_id = 1852
 
 
@@ -267,6 +274,7 @@ class DrainageBasinUpdateTestCase(
     expected_total_area = 690
     expected_mean_slope = 0.16
     expected_mean_elevation = 300
+    expected_max_river_length = 35.3
     expected_imported_id = 1852
 
     def setUp(self):
@@ -286,7 +294,8 @@ class DrainageBasinUpdateTestCase(
                 basinOrderScope='go figure again',
                 totalArea=690,
                 meanSlope=0.16,
-                meanElevation=300
+                meanElevation=300,
+                maxRiverLength=35.3
                 WHERE geographicalName='Attica'
                 """.format(
                     self.view_name
@@ -324,6 +333,7 @@ class RiverBasinInsertTestCase(
     expected_man_made = True
     expected_mean_slope = 0.15
     expected_mean_elevation = 200
+    expected_max_river_length = 27.5
     expected_imported_id = 1851
     model = models.RiverBasin
     view_name = "RiverBasin"
@@ -347,6 +357,7 @@ class RiverBasinUpdateTestCase(
     expected_man_made = False
     expected_mean_slope = 0.16
     expected_mean_elevation = 300
+    expected_max_river_length = 35.3
     expected_imported_id = 1851
 
     def setUp(self):
@@ -362,7 +373,8 @@ class RiverBasinUpdateTestCase(
                 geometry='SRID=2100;POINT(550000 4500000)',
                 origin='natural',
                 meanSlope=0.16,
-                meanElevation=300
+                meanElevation=300,
+                maxRiverLength=35.3
                 WHERE geographicalName='Attica'
                 """.format(
                     self.view_name
@@ -405,10 +417,10 @@ class StationBasinSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 """
                 INSERT INTO openhigis.StationBasin
                 (geographicalName, hydroId, remarks, geometry, origin,
-                meanSlope, meanElevation, id, riverBasin)
+                meanSlope, meanElevation, maxRiverLength, id, riverBasin)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', 0.15, 200, 1852, 1851)
+                'manMade', 0.15, 200, 27.5, 1852, 1851)
                 """
             )
 
@@ -430,6 +442,7 @@ class StationBasinInsertTestCase(
     expected_man_made = True
     expected_mean_slope = 0.15
     expected_mean_elevation = 200
+    expected_max_river_length = 27.5
 
     def test_geographical_name(self):
         with connection.cursor() as cursor:
@@ -455,6 +468,7 @@ class StationBasinUpdateTestCase(
     expected_man_made = False
     expected_mean_slope = 0.16
     expected_mean_elevation = 300
+    expected_max_river_length = 35.3
 
     def setUp(self):
         super().setUp()
@@ -469,7 +483,8 @@ class StationBasinUpdateTestCase(
                 geometry='SRID=2100;POINT(550000 4500000)',
                 origin='natural',
                 meanSlope=0.16,
-                meanElevation=300
+                meanElevation=300,
+                maxRiverLength=35.3
                 WHERE remarks='Hello world'
                 """.format(
                     self.view_name

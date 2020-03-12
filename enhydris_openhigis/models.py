@@ -88,6 +88,7 @@ class BasinMixin(models.Model):
     man_made = models.BooleanField(blank=True, null=True)
     mean_slope = models.FloatField(blank=True, null=True)
     mean_elevation = models.FloatField(blank=True, null=True)
+    max_river_length = models.FloatField(blank=True, null=True)
 
     class Meta:
         abstract = True

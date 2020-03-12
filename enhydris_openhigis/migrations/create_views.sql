@@ -146,10 +146,10 @@ RETURNS void
 AS $$
 BEGIN
     INSERT INTO enhydris_openhigis_basin
-        (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation,
+        (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation, max_river_length,
         imported_id)
     VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
-        NEW.meanSlope, NEW.meanElevation, NEW.id);
+        NEW.meanSlope, NEW.meanElevation, NEW.maxRiverLength, NEW.id);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -162,7 +162,8 @@ BEGIN
             geom2100=NEW.geometry,
             man_made=(NEW.origin = 'manMade'),
             mean_slope=NEW.meanSlope,
-            mean_elevation=NEW.meanElevation
+            mean_elevation=NEW.meanElevation,
+            max_river_length=NEW.maxRiverLength
         WHERE garea_ptr_id=gentity_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -293,7 +294,8 @@ CREATE VIEW DrainageBasin
         ST_Area(basin.geom2100) / 1000000 AS area,
         drb.total_area AS totalArea,
         basin.mean_slope AS meanSlope,
-        basin.mean_elevation AS meanElevation
+        basin.mean_elevation AS meanElevation,
+        basin.max_river_length AS maxRiverLength
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_basin basin
@@ -398,7 +400,8 @@ CREATE VIEW RiverBasin
              END AS origin,
         ST_Area(basin.geom2100) / 1000000 AS area,
         basin.mean_slope AS meanSlope,
-        basin.mean_elevation AS meanElevation
+        basin.mean_elevation AS meanElevation,
+        basin.max_river_length AS maxRiverLength
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_basin basin
@@ -477,7 +480,8 @@ CREATE VIEW StationBasin
              END AS origin,
         ST_Area(sb.geom2100) / 1000000 AS area,
         sb.mean_slope AS meanSlope,
-        sb.mean_elevation AS meanElevation
+        sb.mean_elevation AS meanElevation,
+        sb.max_river_length AS maxRiverLength
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_stationbasin sb
@@ -501,9 +505,10 @@ BEGIN
         WHERE imported_id = NEW.riverBasin;
     INSERT INTO enhydris_openhigis_stationbasin
         (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation,
-            river_basin_id, station_id)
+            max_river_length, river_basin_id, station_id)
         VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
-            NEW.meanSlope, NEW.meanElevation, new_river_basin_id, NEW.id);
+            NEW.meanSlope, NEW.meanElevation, NEW.maxRiverLength,
+            new_river_basin_id, NEW.id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -530,6 +535,7 @@ BEGIN
         man_made=(NEW.origin = 'manMade'),
         mean_slope=NEW.meanSlope,
         mean_elevation=NEW.meanElevation,
+        max_river_length=NEW.maxRiverLength,
         river_basin_id=new_river_basin_id
         WHERE station_id=OLD.id;
     RETURN NEW;
