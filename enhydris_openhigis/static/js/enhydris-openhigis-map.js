@@ -28,12 +28,12 @@ openhigis.map.setUpBaseLayers = function() {
 
 openhigis.map.setUpOverlayLayers = async function() {
     await this.addStationsLayer();
-    this.addOpenhiLayer("Watercourses", "Υδρογραφικό δίκτυο", "#33CCFF", "⌇", true);
-    this.addOpenhiLayer("StandingWaters", "Λίμνες", "#33CCFF", "■", true);
+    this.addOpenhiLayer("Watercourses", "Υδρογραφικό δίκτυο", "#33CCFF", "⌇", false);
+    this.addOpenhiLayer("StandingWaters", "Λίμνες", "#33CCFF", "■", false);
     this.addOpenhiLayer(
         "StationBasins", "Λεκάνες ανάντη σταθμών", "#0066FF", "▮", false
     );
-    this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής", "#0066FF", "▮", false);
+    this.addOpenhiLayer("RiverBasins", "Λεκάνες απορροής", "#0066FF", "▮", true);
 };
 
 openhigis.map.addStationsLayer = async function() {
