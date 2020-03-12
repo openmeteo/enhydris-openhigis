@@ -206,7 +206,7 @@ MAP
             STYLE
                 OUTLINECOLOR 0 102 255
                 OPACITY 100
-                WIDTH 4
+                WIDTH 2
             END
         END
     END
