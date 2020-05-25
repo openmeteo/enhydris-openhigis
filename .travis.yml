@@ -1,21 +1,27 @@
-dist: xenial
+dist: bionic
 
 language: python
 
 python:
- - "3.6"
+ - "3.7"
 
 addons:
-  postgresql: "9.5"
+  postgresql: "10"
   apt:
     packages:
       - gdal-bin
       - libgdal-dev
-      - python3-psycopg2
-      - postgresql-9.5-postgis-2.4
+      - postgresql-10-postgis-2.4
 
 install:
- - CPLUS_INCLUDE_PATH=/usr/include/gdal C_INCLUDE_PATH=/usr/include/gdal pip install 'gdal<1.11'
+ # TimescaleDB
+ - sudo add-apt-repository -y ppa:timescale/timescaledb-ppa
+ - sudo apt-get update
+ - sudo apt-get install -y timescaledb-postgresql-10
+ - sudo bash -c "echo \"shared_preload_libraries = 'timescaledb'\" >>/etc/postgresql/10/main/postgresql.conf"
+ - sudo service postgresql restart
+
+ - CPLUS_INCLUDE_PATH=/usr/include/gdal C_INCLUDE_PATH=/usr/include/gdal pip install 'gdal==2.2.3'
  - pip install codecov black flake8 isort
  - pip install psycopg2==2.7.4
  - pip install -r requirements.txt
