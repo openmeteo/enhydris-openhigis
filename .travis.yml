@@ -43,7 +43,7 @@ before_script:
 script:
  - black --check enhydris_openhigis
  - flake8 --max-line-length=88 enhydris_openhigis
- - isort --recursive --check-only --diff enhydris_openhigis
+ - isort --check-only --diff enhydris_openhigis
  - ./manage.py makemigrations --check
  - coverage run --include="./enhydris_openhigis/*" --omit="*/tests/*","*/tests.py","*/migrations/*" ./manage.py test -v2 enhydris_openhigis
 
