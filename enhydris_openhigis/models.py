@@ -50,8 +50,7 @@ class GGRS87Mixin(models.Model):
 
 
 class HydroOrderCodeMixin(models.Model):
-    """INSPIRE data specification on hydrography, 5.5.2.2.1 (p. 57).
-    """
+    """INSPIRE data specification on hydrography, 5.5.2.2.1 (p. 57)."""
 
     hydro_order = models.CharField(max_length=50, blank=True)
     hydro_order_scheme = models.CharField(max_length=50, blank=True)
