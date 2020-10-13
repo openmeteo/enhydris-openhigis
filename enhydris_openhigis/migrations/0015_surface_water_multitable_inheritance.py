@@ -99,8 +99,8 @@ class Migration(migrations.Migration):
             SET surfacewater_ptr_id=garea_ptr_id;
             """
         ),
-        migrations.RemoveField(model_name="watercourse", name="gentity_ptr",),
-        migrations.RemoveField(model_name="standingwater", name="garea_ptr",),
+        migrations.RemoveField(model_name="watercourse", name="gentity_ptr"),
+        migrations.RemoveField(model_name="standingwater", name="garea_ptr"),
         migrations.RunSQL(
             """
             DELETE FROM enhydris_garea WHERE gentity_ptr_id IN
@@ -131,14 +131,14 @@ class Migration(migrations.Migration):
                 to="enhydris_openhigis.SurfaceWater",
             ),
         ),
-        migrations.RemoveField(model_name="standingwater", name="geom2100",),
-        migrations.RemoveField(model_name="standingwater", name="imported_id",),
-        migrations.RemoveField(model_name="standingwater", name="local_type",),
-        migrations.RemoveField(model_name="standingwater", name="man_made",),
-        migrations.RemoveField(model_name="standingwater", name="river_basin",),
-        migrations.RemoveField(model_name="watercourse", name="geom2100",),
-        migrations.RemoveField(model_name="watercourse", name="imported_id",),
-        migrations.RemoveField(model_name="watercourse", name="local_type",),
-        migrations.RemoveField(model_name="watercourse", name="man_made",),
-        migrations.RemoveField(model_name="watercourse", name="river_basin",),
+        migrations.RemoveField(model_name="standingwater", name="geom2100"),
+        migrations.RemoveField(model_name="standingwater", name="imported_id"),
+        migrations.RemoveField(model_name="standingwater", name="local_type"),
+        migrations.RemoveField(model_name="standingwater", name="man_made"),
+        migrations.RemoveField(model_name="standingwater", name="river_basin"),
+        migrations.RemoveField(model_name="watercourse", name="geom2100"),
+        migrations.RemoveField(model_name="watercourse", name="imported_id"),
+        migrations.RemoveField(model_name="watercourse", name="local_type"),
+        migrations.RemoveField(model_name="watercourse", name="man_made"),
+        migrations.RemoveField(model_name="watercourse", name="river_basin"),
     ]

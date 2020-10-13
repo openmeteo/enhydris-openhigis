@@ -37,8 +37,11 @@ def _model_has_field(model, fieldname):
 
 
 def _get_leaf_classes(class_list):
-    """Return a subset of class_list that does not contain classes that are inherited
-       by other classes of class_list."""
+    """Return a subset of class_list that only contains classes without subclasses.
+
+    Returns a subset of class_list that does not contain classes that are inherited by
+    other classes of class_list.
+    """
     return {
         klass for klass in class_list if _class_has_no_subclasses(klass, class_list)
     }

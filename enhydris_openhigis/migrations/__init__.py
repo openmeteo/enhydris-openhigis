@@ -8,7 +8,7 @@ from django.dispatch import receiver
 @receiver(post_migrate)
 @transaction.atomic
 def create_or_replace_views(sender, **kwargs):
-    if (kwargs["app_config"].name != "enhydris_openhigis") or (not kwargs["plan"]):
+    if (kwargs["app_config"].name != "enhydris_openhigis") or (not kwargs.get("plan")):
         return
     create_views_pathname = os.path.join(os.path.dirname(__file__), "create_views.sql")
     with connection.cursor() as cursor:

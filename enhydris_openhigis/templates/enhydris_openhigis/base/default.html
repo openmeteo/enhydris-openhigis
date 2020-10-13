@@ -1,18 +1,13 @@
 {% extends "enhydris/base/main_with_map.html" %}
 {% load static %}
 
-
 {% block basecss %}
   {{ block.super }}
-  <link href="{% static "css/enhydris-openhigis.css" %}" type="text/css"
-        rel="stylesheet"
-  />
+  <link href="{% static 'css/enhydris-openhigis.css' %}" type="text/css" rel="stylesheet">
 {% endblock %}
-
 
 {% block body_onload %}
 {% endblock %}
-
 
 {% block header %}
   {% include "enhydris_openhigis/base/navbar.html" %}
@@ -20,12 +15,10 @@
   {% include "enhydris/base/messages.html" %}
 {% endblock %}
 
-
 {% block leaflet_plugins %}
   {{ block.super }}
-  <script type="text/javascript" src="{% static "js/TileLayer.Grayscale.js" %}"></script>
+  <script type="text/javascript" src="{% static 'js/TileLayer.Grayscale.js' %}"></script>
 {% endblock %}
-
 
 {% block map_js %}
   <script type="text/javascript">
@@ -86,10 +79,7 @@
   </script>
 {% endblock %}
 
-
 {% block extrajs %}
-  <script type="text/javascript" src="{% static "js/betterwms.js" %}">
-  </script>
-  <script type="text/javascript" src="{% static "js/enhydris-openhigis-map.js" %}">
-  </script>
+  <script type="text/javascript" src="{% static 'js/betterwms.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/enhydris-openhigis-map.js' %}"></script>
 {% endblock %}
