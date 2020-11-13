@@ -1,11 +1,15 @@
 {% extends "enhydris/base/navbar.html" %}
 {% load i18n %}
 
+{% block home_button %}
+  <a class="navbar-brand" href="https://openhi.net/">OpenHI</a>
+{% endblock %}
+
 {% block search %}
   <form class="form-inline mb-2 mt-3 my-lg-0 form-search" onsubmit="return openhigis.map.search();">
     <div class="col-12 px-0 py-2 py-lg-0">
       <div class="input-group">
-        <input id="search_input" type="text" name="q" value="{{ query|escape }}" class="form-control" placeholder="{% trans 'Search' %}">
+        <input id="search_input" type="text" name="q" value="{{ query|escape }}" class="form-control" placeholder="{% trans 'Search geodata' %}">
         <div class="input-group-prepend">
           <button class="btn btn-primary my-sm-0 btn-search" type="submit">
             <svg class="bi bi-search" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor"
@@ -18,4 +22,7 @@
       </div>
     </div>
   </form>
+{% endblock %}
+
+{% block menu %}
 {% endblock %}
