@@ -1,5 +1,5 @@
 MAP
-    NAME "OpenHI"
+    NAME "OpenHi"
     STATUS ON
     SIZE 9040 7731
     EXTENT 103986.57 3850796.18 1007945.14 4623933.00
@@ -90,13 +90,13 @@ MAP
         IMAGEPATH "/var/cache/mapserver/"
         IMAGEURL "/mapserver_tmp/"
         METADATA
-            "wms_title" "OpenHI"
+            "wms_title" "OpenHi"
             "wms_onlineresource" "https://system.openhi.net/cgi-bin/mapserv?map=/opt/enhydris-openhi/enhydris-openhigis/mapserver/openhigis.map&"
             "wms_srs" "EPSG:4326 EPSG:2100 EPSG:3857"
             "wms_enable_request" "*"
             "wms_feature_info_mime_type" "text/html"
 
-            "wfs_title" "OpenHI"
+            "wfs_title" "OpenHi"
             "wfs_onlineresource" "https://system.openhi.net/cgi-bin/mapserv?map=/opt/enhydris-openhi/enhydris-openhigis/mapserver/openhigis.map&"
             "wfs_srs" "EPSG:2100 EPSG:4326 EPSG:3857"
             "wfs_enable_request" "*"

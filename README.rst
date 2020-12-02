@@ -1,5 +1,5 @@
 ==================================
-Enhydris-openhigis - OpenHI layers
+Enhydris-openhigis - OpenHi layers
 ==================================
 
 .. image:: https://travis-ci.org/openmeteo/enhydris-openhigis.svg?branch=master
@@ -11,10 +11,10 @@ Enhydris-openhigis - OpenHI layers
     :target: https://codecov.io/gh/openmeteo/enhydris-openhigis
 
 Enhydris-openhigis is an app that provides layers (such as water basins
-and river networks) for the OpenHI project. In the repository there's
+and river networks) for the OpenHi project. In the repository there's
 also MapServer configuration for serving these layers with WMS and WFS.
 
-The app is specific to the OpenHI project and several things are
+The app is specific to the OpenHi project and several things are
 hardwired in the code.
 
 The app contains geographical models such as ``RiverBasinDistrict``,
