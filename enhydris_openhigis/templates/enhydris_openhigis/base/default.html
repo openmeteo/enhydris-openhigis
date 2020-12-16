@@ -17,7 +17,7 @@
 
 {% block leaflet_plugins %}
   {{ block.super }}
-  <script type="text/javascript" src="{% static 'js/TileLayer.Grayscale.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/vendor/TileLayer.Grayscale.js' %}"></script>
 {% endblock %}
 
 {% block map_js %}
@@ -80,6 +80,6 @@
 {% endblock %}
 
 {% block extrajs %}
-  <script type="text/javascript" src="{% static 'js/betterwms.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/vendor/betterwms.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/enhydris-openhigis-map.js' %}"></script>
 {% endblock %}
