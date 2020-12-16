@@ -1,4 +1,3 @@
-enhydris.openhigis = {};
 enhydris.openhigis.map = L.map('openhigis-map');
 
 enhydris.openhigis.map.setUp = function () {

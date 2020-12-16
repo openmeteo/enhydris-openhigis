@@ -70,9 +70,8 @@
     };
     enhydris.mapDefaultBaseLayer = "Open Street Map Grayscale";
     enhydris.mapViewport = {{ map_viewport|safe }};
-    enhydris.mapMarkers = {{ map_markers|safe }};
     enhydris.searchString = {{ searchString|safe }};
-    var openhigis = {
+    enhydris.openhigis = {
         base_url: "{{ base_url }}",
         ows_url: "{{ ows_url }}",
     };
