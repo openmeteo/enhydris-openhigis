@@ -118,7 +118,7 @@ enhydris.openhigis.map.addOpenhiLayer = function (
   }
 };
 
-enhydris.openhigis.map.search = function () {
+enhydris.openhigis.map.search = function (event) {
   const searchText = document.getElementById('search_input').value.trim();
   if (searchText === '') {
     return;
@@ -134,7 +134,10 @@ enhydris.openhigis.map.search = function () {
   };
   xhr.open('GET', `${enhydris.openhigis.base_url}search/${searchText}`);
   xhr.send();
+  event.preventDefault();
 };
+
+document.querySelector('#search-form').addEventListener("submit", enhydris.openhigis.map.search);
 
 enhydris.openhigis.map.zoomTo = function (searchResult) {
   this.fitBounds([
