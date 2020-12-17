@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block search %}
-  <form class="form-inline mb-2 mt-3 my-lg-0 form-search" onsubmit="return openhigis.map.search();">
+  <form class="form-inline mb-2 mt-3 my-lg-0 form-search" onsubmit="return enhydris.openhigis.map.search();">
     <div class="col-12 px-0 py-2 py-lg-0">
       <div class="input-group">
         <input id="search_input" type="text" name="q" value="{{ query|escape }}" class="form-control" placeholder="{% trans 'Search geodata' %}">

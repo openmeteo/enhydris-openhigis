@@ -17,7 +17,7 @@
 
 {% block leaflet_plugins %}
   {{ block.super }}
-  <script type="text/javascript" src="{% static 'js/TileLayer.Grayscale.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/vendor/TileLayer.Grayscale.js' %}"></script>
 {% endblock %}
 
 {% block map_js %}
@@ -70,9 +70,8 @@
     };
     enhydris.mapDefaultBaseLayer = "Open Street Map Grayscale";
     enhydris.mapViewport = {{ map_viewport|safe }};
-    enhydris.mapMarkers = {{ map_markers|safe }};
     enhydris.searchString = {{ searchString|safe }};
-    var openhigis = {
+    enhydris.openhigis = {
         base_url: "{{ base_url }}",
         ows_url: "{{ ows_url }}",
     };
@@ -80,6 +79,6 @@
 {% endblock %}
 
 {% block extrajs %}
-  <script type="text/javascript" src="{% static 'js/betterwms.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/vendor/betterwms.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/enhydris-openhigis-map.js' %}"></script>
 {% endblock %}
