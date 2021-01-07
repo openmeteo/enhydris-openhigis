@@ -54,8 +54,11 @@ General Public License.
      ]
 
 - In the Enhydris ``enhydris_project/settings/local.py`` file, add
-  ``enhydris_openhigis`` to ``INSTALLED_APPS``, and specify the
-  ``urls.py`` file in ``ROOT_URLCONF``.
+  ``enhydris_openhigis`` to ``INSTALLED_APPS``, specify the ``urls.py``
+  file in ``ROOT_URLCONF``, add
+  ``enhydris_openhigis.middleware.OpenHiGISMiddleware`` to
+  ``MIDDLEWARE``, and specify the mapserver root url in
+  ``ENHYDRIS_OWS_URL``.
 
 - In the Enhydris configuration directory, execute ``python manage.py
   migrate``.

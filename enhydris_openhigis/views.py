@@ -3,22 +3,9 @@ from django.conf import settings
 from django.contrib.gis.db.models import Extent
 from django.contrib.gis.geos import Point
 from django.http import HttpResponse
-from django.urls import reverse
-from django.views.generic import TemplateView, View
+from django.views.generic import View
 
 from enhydris.views_common import ensure_extent_is_large_enough
-
-
-class MapView(TemplateView):
-    template_name = "enhydris_openhigis/map/main.html"
-
-    def get_context_data(self, *args, **kwargs):
-        result = super().get_context_data(*args, **kwargs)
-        result["ows_url"] = getattr(
-            settings, "ENHYDRIS_OWS_URL", "http://localhost/geoserver"
-        )
-        result["base_url"] = reverse("openhigis_map")
-        return result
 
 
 def get_all_geomodels():
