@@ -1,0 +1,26 @@
+{% extends "enhydris/base/main_with_map-default.html" %}
+{% load static %}
+
+{% block basecss %}
+  {{ block.super }}
+  <link href="{% static 'css/enhydris-openhigis.css' %}" type="text/css" rel="stylesheet">
+{% endblock %}
+
+{% block leaflet_plugins %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% static 'js/vendor/TileLayer.Grayscale.js' %}"></script>
+{% endblock %}
+
+{% block map_js %}
+  {{ block.super }}
+  <script type="text/javascript">
+    enhydris.mapViewport = {{ map_viewport|safe }};
+    enhydris.searchString = {{ searchString|safe }};
+    enhydris.openhigis = {
+        search_url: "{% url 'openhigis_search' 'SEARCH_TERM' %}",
+        ows_url: "{{ request.openhigis.ows_url }}",
+    };
+  </script>
+  <script type="text/javascript" src="{% static 'js/vendor/betterwms.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/enhydris-openhigis-map.js' %}"></script>
+{% endblock %}

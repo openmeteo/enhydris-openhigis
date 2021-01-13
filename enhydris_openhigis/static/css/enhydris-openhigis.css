@@ -1,26 +1,31 @@
-#openhigis-map-container {
-  position: absolute;
-  top: 62px;
-  bottom: 10px;
-  left: 0;
-
-  width: 100%;
-  padding-right: 15px;
-  padding-left: 15px;
-}
-
-#openhigis-map {
+.form-geosearch-wrapper {
+  pointer-events: auto;
   position: relative;
-
-  width: 100%;
-  height: 100%;
+  z-index: 990;
+  width: 260px;
+  margin-top: -80px;
+  margin-right: 10px;
+  margin-left: auto;
 }
 
-#openhigis-map.leaflet-grab:not(.leaflet-drag-target) {
-  cursor: default;  /* Cursor is used both for grabbing and selecting */
+#geosearch_input {
+  padding-left: 40px;
+  border: 2px solid #fff;
+  border-radius: 50px;
 }
 
-#openhigis-map.leaflet-container {
-  background-color: #fff;
-  border: 2px solid #d3d3d3;
+.form-geosearch::before {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  content: "";
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  background-image: url("../images/icon-search.svg");
+  background-repeat: no-repeat;
+}
+
+#mapid.leaflet-grab:not(.leaflet-drag-target) {
+  cursor: default; /* Cursor is used both for grabbing and selecting */
 }
