@@ -127,6 +127,7 @@ class SurfaceWater(Gentity, GGRS87Mixin, ImportedIdMixin):
     river_basin = models.ForeignKey(
         RiverBasin, on_delete=models.CASCADE, null=True, blank=True
     )
+    level_of_detail = models.IntegerField(blank=True, null=True)
 
 
 class HydroNode(Gpoint, GGRS87Mixin, ImportedIdMixin):
@@ -134,22 +135,44 @@ class HydroNode(Gpoint, GGRS87Mixin, ImportedIdMixin):
 
 
 class Watercourse(SurfaceWater, HydroOrderCodeMixin):
-    min_width = models.FloatField(blank=True, null=True)
-    max_width = models.FloatField(blank=True, null=True)
+    delineation_known = models.BooleanField(blank=True, null=True)
+    length = models.FloatField(blank=True, null=True)
+    level = models.FloatField(blank=True, null=True)
+    width = models.FloatField(blank=True, null=True)
+    slope = models.FloatField(blank=True, null=True)
+    outlet = models.ForeignKey(
+        HydroNode, on_delete=models.CASCADE, null=True, blank=True
+    )
+
+
+class WatercourseLink(Gentity, GGRS87Mixin, ImportedIdMixin):
+    IN_DIRECTION = "inDirection"
+    BOTH_DIRECTIONS = "bothDirections"
+    IN_OPPOSITE_DIRECTION = "inOppositeDirection"
+    FLOW_DIRECTIONS = (
+        (IN_DIRECTION, "in direction"),
+        (BOTH_DIRECTIONS, "both directions"),
+        (IN_OPPOSITE_DIRECTION, "in opposite direction"),
+    )
+    length = models.FloatField(blank=True, null=True)
+    flow_direction = models.CharField(
+        max_length=19, blank=True, choices=FLOW_DIRECTIONS
+    )
     start_node = models.ForeignKey(
         HydroNode,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name="watercourses_starting",
+        related_name="watercourselinks_starting",
     )
     end_node = models.ForeignKey(
         HydroNode,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name="watercourses_ending",
+        related_name="watercourselinks_ending",
     )
+    fictitious = models.BooleanField()
 
 
 class StandingWater(SurfaceWater):

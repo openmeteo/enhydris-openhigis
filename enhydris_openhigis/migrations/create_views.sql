@@ -176,10 +176,11 @@ BEGIN
     SELECT garea_ptr_id INTO new_river_basin_id FROM enhydris_openhigis_basin
         WHERE imported_id=NEW.drainsBasin;
     INSERT INTO enhydris_openhigis_surfacewater
-        (gentity_ptr_id, geom2100, local_type, man_made, river_basin_id, imported_id)
+        (gentity_ptr_id, geom2100, local_type, man_made, river_basin_id, imported_id,
+        level_of_detail)
     VALUES
         (gentity_id, NEW.geometry, NEW.localType, NEW.origin = 'manMade',
-         new_river_basin_id, NEW.id);
+         new_river_basin_id, NEW.id, NEW.levelOfDetail);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -195,7 +196,8 @@ BEGIN
             geom2100=NEW.geometry,
             local_type=NEW.localType,
             man_made=(NEW.origin = 'manMade'),
-            river_basin_id=new_river_basin_id
+            river_basin_id=new_river_basin_id,
+            level_of_detail=NEW.levelOfDetail
         WHERE gentity_ptr_id=gentity_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -585,12 +587,14 @@ CREATE VIEW Watercourse
         watercourse.hydro_order AS streamOrder,
         watercourse.hydro_order_scheme AS streamOrderScheme,
         watercourse.hydro_order_scope AS streamOrderScope,
-        ST_LENGTH(surfacewater.geom2100) / 1000 AS length,
         surfacewater.local_type AS localType,
-        watercourse.min_width AS lowerWidth,
-        watercourse.max_width AS upperWidth,
-        start_node.imported_id AS startNode,
-        end_node.imported_id AS endNode
+        watercourse.width AS width,
+        watercourse.length AS length,
+        watercourse.level AS level,
+        watercourse.slope AS slope,
+        watercourse.delineation_known AS delineationKnown,
+        surfacewater.level_of_detail AS levelOfDetail,
+        outlet.imported_id AS outlet
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_surfacewater surfacewater
@@ -601,33 +605,29 @@ CREATE VIEW Watercourse
             ON surfacewater.river_basin_id = riverbasin.basin_ptr_id
         LEFT JOIN enhydris_openhigis_basin riverbasin_basin
             ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id
-        LEFT JOIN enhydris_openhigis_hydronode start_node
-            ON watercourse.start_node_id = start_node.imported_id
-        LEFT JOIN enhydris_openhigis_hydronode end_node
-            ON watercourse.start_node_id = end_node.imported_id;
+        LEFT JOIN enhydris_openhigis_hydronode outlet
+            ON watercourse.outlet_id = outlet.imported_id;
 
 
 CREATE OR REPLACE FUNCTION insert_into_Watercourse() RETURNS TRIGGER
 AS $$
 DECLARE
     gentity_id INTEGER;
-    new_start_node_id INTEGER;
-    new_end_node_id INTEGER;
+    new_outlet_id INTEGER;
 BEGIN
     gentity_id = openhigis.insert_into_gentity(NEW);
-    SELECT gpoint_ptr_id INTO new_start_node_id FROM enhydris_openhigis_hydronode
-        WHERE imported_id=NEW.startNode;
-    SELECT gpoint_ptr_id INTO new_end_node_id FROM enhydris_openhigis_hydronode
-        WHERE imported_id=NEW.endNode;
     PERFORM openhigis.insert_into_surfacewater(gentity_id, NEW);
+    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.outlet;
     INSERT INTO enhydris_openhigis_watercourse
         (surfacewater_ptr_id, hydro_order, hydro_order_scheme, hydro_order_scope,
-            min_width, max_width, start_node_id, end_node_id)
+            width, level, length, slope, delineation_known, outlet_id)
         VALUES (gentity_id,
             COALESCE(NEW.streamOrder, ''),
             COALESCE(NEW.streamOrderScheme, ''),
             COALESCE(NEW.streamOrderScope, ''),
-            NEW.lowerWidth, NEW.upperWidth, new_start_node_id, new_end_node_id);
+            NEW.width, NEW.level, NEW.length, NEW.slope, NEW.delineationKnown,
+            new_outlet_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -640,26 +640,25 @@ CREATE OR REPLACE FUNCTION update_Watercourse() RETURNS TRIGGER
 AS $$
 DECLARE
     gentity_id INTEGER;
-    new_start_node_id INTEGER;
-    new_end_node_id INTEGER;
+    new_outlet_id INTEGER;
 BEGIN
     SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_surfacewater
         WHERE imported_id=OLD.id;
     PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     PERFORM openhigis.update_surfacewater(gentity_id, OLD, NEW);
-    SELECT gpoint_ptr_id INTO new_start_node_id FROM enhydris_openhigis_hydronode
-        WHERE imported_id=NEW.startNode;
-    SELECT gpoint_ptr_id INTO new_end_node_id FROM enhydris_openhigis_hydronode
-        WHERE imported_id=NEW.endNode;
+    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.outlet;
     UPDATE enhydris_openhigis_watercourse
     SET
         hydro_order=COALESCE(NEW.streamOrder, ''),
         hydro_order_scheme=COALESCE(NEW.streamOrderScheme, ''),
         hydro_order_scope=COALESCE(NEW.streamOrderScope, ''),
-        min_width=NEW.lowerWidth,
-        max_width=NEW.upperWidth,
-        start_node_id=new_start_node_id,
-        end_node_id=new_end_node_id
+        width=NEW.width,
+        length=NEW.length,
+        level=NEW.level,
+        slope=NEW.slope,
+        delineation_known=NEW.delineationKnown,
+        outlet_id=new_outlet_id
         WHERE surfacewater_ptr_id=gentity_id;
     RETURN NEW;
 END;
@@ -688,6 +687,108 @@ CREATE TRIGGER Watercourse_delete
     INSTEAD OF DELETE ON Watercourse
     FOR EACH ROW EXECUTE PROCEDURE delete_Watercourse();
 
+/* WatercourseLink */
+
+DROP VIEW IF EXISTS WatercourseLink;
+
+CREATE VIEW WatercourseLink
+    AS SELECT
+        wl.imported_id as id,
+        g.name AS geographicalName,
+        g.code AS hydroId,
+        g.last_modified AS beginLifespanVersion,
+        g.remarks,
+        wl.geom2100 AS geometry,
+        wl.length AS length,
+        wl.flow_direction AS flowDirection,
+        start_node.imported_id AS startNode,
+        end_node.imported_id AS endNode,
+        wl.fictitious
+    FROM
+        enhydris_gentity g
+        INNER JOIN enhydris_openhigis_watercourselink wl
+            ON wl.gentity_ptr_id = g.id
+        LEFT JOIN enhydris_openhigis_hydronode start_node
+            ON wl.start_node_id = start_node.imported_id
+        LEFT JOIN enhydris_openhigis_hydronode end_node
+            ON wl.end_node_id = end_node.imported_id;
+
+
+CREATE OR REPLACE FUNCTION insert_into_WatercourseLink() RETURNS TRIGGER
+AS $$
+DECLARE
+    gentity_id INTEGER;
+    new_start_node_id INTEGER;
+    new_end_node_id INTEGER;
+BEGIN
+    gentity_id = openhigis.insert_into_gentity(NEW);
+    SELECT gpoint_ptr_id INTO new_start_node_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.startNode;
+    SELECT gpoint_ptr_id INTO new_end_node_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.endNode;
+    INSERT INTO enhydris_openhigis_watercourselink
+        (gentity_ptr_id, geom2100, imported_id, length, flow_direction,
+         start_node_id, end_node_id, fictitious)
+    VALUES
+        (gentity_id, NEW.geometry, NEW.id, NEW.length, NEW.flowDirection,
+        new_start_node_id, new_end_node_id, NEW.fictitious);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER WatercourseLink_insert
+    INSTEAD OF INSERT ON WatercourseLink
+    FOR EACH ROW EXECUTE PROCEDURE insert_into_WatercourseLink();
+
+CREATE OR REPLACE FUNCTION update_WatercourseLink() RETURNS TRIGGER
+AS $$
+DECLARE
+    gentity_id INTEGER;
+    new_start_node_id INTEGER;
+    new_end_node_id INTEGER;
+BEGIN
+    SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_watercourselink
+        WHERE imported_id=OLD.id;
+    PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
+    SELECT gpoint_ptr_id INTO new_start_node_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.startNode;
+    SELECT gpoint_ptr_id INTO new_end_node_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.endNode;
+    UPDATE enhydris_openhigis_watercourselink
+    SET
+        length=NEW.length,
+        geom2100=NEW.geometry,
+        flow_direction=NEW.flowDirection,
+        start_node_id=new_start_node_id,
+        end_node_id=new_end_node_id,
+        fictitious=NEW.fictitious
+    WHERE gentity_ptr_id=gentity_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER WatercourseLink_update
+    INSTEAD OF UPDATE ON WatercourseLink
+    FOR EACH ROW EXECUTE PROCEDURE update_WatercourseLink();
+
+CREATE OR REPLACE FUNCTION delete_WatercourseLink()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE gentity_id INTEGER;
+BEGIN
+    SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_watercourselink
+        WHERE imported_id=OLD.id;
+    DELETE FROM enhydris_openhigis_watercourselink WHERE gentity_ptr_id=gentity_id;
+    DELETE FROM enhydris_gentity WHERE id=gentity_id;
+    RETURN OLD;
+END;
+$$;
+
+CREATE TRIGGER WatercourseLink_delete
+    INSTEAD OF DELETE ON WatercourseLink
+    FOR EACH ROW EXECUTE PROCEDURE delete_WatercourseLink();
+
 /* StandingWater */
 
 DROP VIEW IF EXISTS StandingWater;
@@ -707,6 +808,7 @@ CREATE VIEW StandingWater
              END AS origin,
         ST_LENGTH(surfacewater.geom2100) / 1000 AS length,
         surfacewater.local_type AS localType,
+        surfacewater.level_of_detail AS levelOfDetail,
         standingwater.elevation AS elevation,
         standingwater.mean_depth AS meanDepth,
         ST_Area(surfacewater.geom2100) / 1000000 AS area

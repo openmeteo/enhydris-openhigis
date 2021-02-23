@@ -21,6 +21,7 @@ class GetAllGeomodelsTestCase(TestCase):
                 models.StationBasin,
                 models.Watercourse,
                 models.HydroNode,
+                models.WatercourseLink,
             },
         )
 
