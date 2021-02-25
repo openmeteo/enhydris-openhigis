@@ -239,6 +239,24 @@ MAP
     END
 
     LAYER
+        NAME "WatercourseLinks"
+        TYPE LINE
+        CONNECTIONTYPE POSTGIS
+        CONNECTION "host=localhost dbname=openmeteo user=mapserver"
+        METADATA
+            "wms_title" "WatercourseLinks"
+            "wfs_title" "WatercourseLinks"
+            "gml_include_items" "all"
+            "gml_featureid" "id"
+        END
+        STATUS ON
+        DATA "geometry FROM openhigis.WatercourseLink USING UNIQUE id USING SRID=2100"
+        PROJECTION
+            "init=epsg:2100"
+        END
+    END
+
+    LAYER
         NAME "StandingWaters"
         TYPE POLYGON
         CONNECTIONTYPE POSTGIS

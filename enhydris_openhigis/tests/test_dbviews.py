@@ -596,11 +596,11 @@ class WatercourseSetupInitialRowMixin(
                 INSERT INTO openhigis.Watercourse
                 (geographicalName, hydroId, remarks, geometry, origin, streamOrder,
                 streamOrderScheme, streamOrderScope, id, localType, drainsBasin,
-                lowerWidth, upperWidth, startNode, endNode)
+                width, delineationKnown, length, level, slope, levelOfDetail, outlet)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
                 'manMade', '18', 'strahler', 'go figure', 1852, 'ditch', 1851, 2.718,
-                3.142, NULL, 1901)
+                TRUE, 3.14159, 776.3, 0.45, 50000, NULL)
                 """
             )
 
@@ -619,27 +619,33 @@ class SurfaceWaterTestsMixin:
             self.model.objects.first().river_basin.id, self.expected_basin_id
         )
 
+    def test_level_of_detail(self):
+        self.assertEqual(
+            self.model.objects.first().level_of_detail, self.expected_level_of_detail
+        )
+
 
 class WatercourseTestsMixin:
-    def test_min_width(self):
-        self.assertAlmostEqual(
-            self.model.objects.first().min_width, self.expected_min_width
-        )
+    def test_width(self):
+        self.assertAlmostEqual(self.model.objects.first().width, self.expected_width)
 
-    def test_max_width(self):
-        self.assertAlmostEqual(
-            self.model.objects.first().max_width, self.expected_max_width
-        )
-
-    def test_start_node(self):
+    def test_delineation_known(self):
         self.assertEqual(
-            self.model.objects.first().start_node_id, self.expected_start_node_id
+            self.model.objects.first().delineation_known,
+            self.expected_delineation_known,
         )
 
-    def test_end_node(self):
-        self.assertEqual(
-            self.model.objects.first().end_node_id, self.expected_end_node_id
-        )
+    def test_length(self):
+        self.assertAlmostEqual(self.model.objects.first().length, self.expected_length)
+
+    def test_level(self):
+        self.assertAlmostEqual(self.model.objects.first().level, self.expected_level)
+
+    def test_outlet(self):
+        self.assertEqual(self.model.objects.first().outlet_id, self.expected_outlet_id)
+
+    def test_slope(self):
+        self.assertEqual(self.model.objects.first().slope, self.expected_slope)
 
 
 class WatercourseInsertTestCase(
@@ -660,16 +666,17 @@ class WatercourseInsertTestCase(
     expected_y = 36.14732
     expected_man_made = True
     expected_local_type = "ditch"
-    expected_min_width = 2.718
-    expected_max_width = 3.142
+    expected_level_of_detail = 50000
+    expected_width = 2.718
     expected_hydro_order = "18"
     expected_hydro_order_scheme = "strahler"
     expected_hydro_order_scope = "go figure"
     expected_start_node_id = None
-
-    @property
-    def expected_end_node_id(self):
-        return models.HydroNode.objects.get(imported_id=1901).id
+    expected_delineation_known = True
+    expected_length = 3.14159
+    expected_level = 776.3
+    expected_slope = 0.45
+    expected_outlet_id = None
 
 
 class WatercourseUpdateTestCase(
@@ -690,15 +697,18 @@ class WatercourseUpdateTestCase(
     expected_y = 40.65191
     expected_man_made = False
     expected_local_type = "river"
-    expected_min_width = 1.141
-    expected_max_width = 2.282
+    expected_width = 1.141
     expected_hydro_order = "19"
     expected_hydro_order_scheme = "mahler"
     expected_hydro_order_scope = "no figure"
-    expected_end_node_id = None
+    expected_level_of_detail = 100000
+    expected_delineation_known = False
+    expected_length = 3.13
+    expected_level = 776.2
+    expected_slope = 0.55
 
     @property
-    def expected_start_node_id(self):
+    def expected_outlet_id(self):
         return models.HydroNode.objects.get(imported_id=1901).id
 
     def setUp(self):
@@ -714,13 +724,16 @@ class WatercourseUpdateTestCase(
                 geometry='SRID=2100;POINT(550000 4500000)',
                 origin='natural',
                 localType='river',
-                lowerWidth=1.141,
-                upperWidth=2.282,
+                width=1.141,
+                levelOfDetail=100000,
+                delineationKnown=FALSE,
+                length=3.13,
+                level=776.2,
+                slope=0.55,
                 streamOrder=19,
                 streamOrderScheme='mahler',
                 streamOrderScope='no figure',
-                startNode=1901,
-                endNode=NULL
+                outlet=1901
                 WHERE remarks='Hello world'
                 """.format(
                     self.view_name
@@ -748,10 +761,10 @@ class StandingWaterSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 """
                 INSERT INTO openhigis.StandingWater
                 (geographicalName, hydroId, remarks, geometry, origin, id, localType,
-                drainsBasin, elevation, meanDepth)
+                drainsBasin, elevation, meanDepth, levelOfDetail)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', 1852, 'pool', 1851, 784.1, 18.7)
+                'manMade', 1852, 'pool', 1851, 784.1, 18.7, 50000)
                 """
             )
         self.expected_surface_water_id = models.StandingWater.objects.first().id
@@ -786,6 +799,7 @@ class StandingWaterInsertTestCase(
     expected_y = 36.14732
     expected_man_made = True
     expected_local_type = "pool"
+    expected_level_of_detail = 50000
     expected_elevation = 784.1
     expected_mean_depth = 18.7
 
@@ -807,6 +821,7 @@ class StandingWaterUpdateTestCase(
     expected_y = 40.65191
     expected_man_made = False
     expected_local_type = "lake"
+    expected_level_of_detail = 100000
     expected_elevation = 784.2
     expected_mean_depth = 18.8
 
@@ -823,6 +838,7 @@ class StandingWaterUpdateTestCase(
                 geometry='SRID=2100;POINT(550000 4500000)',
                 origin='natural',
                 localType='lake',
+                levelOfDetail=100000,
                 elevation=784.2,
                 meanDepth=18.8
                 WHERE remarks='Hello world'
@@ -953,3 +969,128 @@ class StationSridTestCase(SridMixin, StationSetupInitialRowMixin, TestCase):
     model = models.Station
     view_name = "Station"
     condition = "remarks = 'Hello world'"
+
+
+class WatercourseLinkSetupInitialRowMixin(HydroNodeSetupInitialRowMixin):
+    def setUp(self):
+        super().setUp()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.WatercourseLink
+                (id, geographicalName, hydroId, remarks, geometry, length,
+                flowDirection, startNode, endNode, fictitious)
+                VALUES (1852, 'Segment 18', 'S18', 'hello world',
+                'SRID=2100;POINT(500000 4000000)', 3.14159, 'inDirection', NULL, 1901,
+                False)
+                """
+            )
+
+
+class WatercourseLinkTestsMixin:
+    def test_length(self):
+        self.assertAlmostEqual(self.model.objects.first().length, self.expected_length)
+
+    def test_flow_direction(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().flow_direction, self.expected_flow_direction
+        )
+
+    def test_start_node(self):
+        self.assertEqual(
+            self.model.objects.first().start_node_id, self.expected_start_node_id
+        )
+
+    def test_end_node(self):
+        self.assertEqual(
+            self.model.objects.first().end_node_id, self.expected_end_node_id
+        )
+
+    def test_fictitious(self):
+        self.assertEqual(
+            self.model.objects.first().fictitious, self.expected_fictitious
+        )
+
+
+class WatercourseLinkInsertTestCase(
+    EssentialTestsMixin,
+    WatercourseLinkSetupInitialRowMixin,
+    WatercourseLinkTestsMixin,
+    TestCase,
+):
+    model = models.WatercourseLink
+    view_name = "WatercourseLink"
+    expected_count = 1
+    expected_name = "Segment 18"
+    expected_code = "S18"
+    expected_length = 3.14159
+    expected_flow_direction = "inDirection"
+    expected_remarks = "hello world"
+    expected_x = 24.00166
+    expected_y = 36.14732
+    expected_fictitious = False
+    expected_start_node_id = None
+
+    @property
+    def expected_end_node_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
+
+
+class WatercourseLinkUpdateTestCase(
+    EssentialTestsMixin,
+    WatercourseLinkSetupInitialRowMixin,
+    WatercourseLinkTestsMixin,
+    TestCase,
+):
+    model = models.WatercourseLink
+    view_name = "WatercourseLink"
+    expected_count = 1
+    expected_name = "Segment 19"
+    expected_code = "S19"
+    expected_length = 2.718
+    expected_flow_direction = "inOppositeDirection"
+    expected_remarks = "hello earth"
+    expected_x = 24.59318
+    expected_y = 40.65191
+    expected_fictitious = True
+    expected_end_node_id = None
+
+    @property
+    def expected_start_node_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
+
+    def setUp(self):
+        super().setUp()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                UPDATE openhigis.{self.view_name}
+                SET
+                geographicalName='Segment 19',
+                hydroId='S19',
+                remarks='hello earth',
+                geometry='SRID=2100;POINT(550000 4500000)',
+                length=2.718,
+                flowDirection='inOppositeDirection',
+                startNode=1901,
+                endNode=NULL,
+                fictitious=True
+                WHERE remarks='hello world'
+                """
+            )
+
+
+class WatercourseLinkDeleteTestCase(
+    DeleteMixin, WatercourseLinkSetupInitialRowMixin, TestCase
+):
+    model = models.WatercourseLink
+    view_name = "WatercourseLink"
+    condition = "remarks = 'hello world'"
+
+
+class WatercourseLinkSridTestCase(
+    SridMixin, WatercourseLinkSetupInitialRowMixin, TestCase
+):
+    model = models.WatercourseLink
+    view_name = "WatercourseLink"
+    condition = "remarks = 'hello world'"
