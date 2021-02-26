@@ -753,6 +753,34 @@ class WatercourseSridTestCase(SridMixin, WatercourseSetupInitialRowMixin, TestCa
     condition = "remarks = 'Hello world'"
 
 
+class NullLocalTypeTestCase(TestCase):
+    def _create_row(self, local_type_sql_expression="NULL"):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                INSERT INTO openhigis.Watercourse
+                (localType, geographicalName, hydroId, remarks, geometry, origin,
+                streamOrder, streamOrderScheme, streamOrderScope, id, drainsBasin,
+                width, delineationKnown, length, level, slope, levelOfDetail, outlet)
+                VALUES
+                ({local_type_sql_expression}, 'Attica', '06', 'Hello world',
+                'SRID=2100;POINT(500000 4000000)', 'manMade', '18', 'strahler',
+                'go figure', 1852, 1851, 2.718, TRUE, 3.14159, 776.3, 0.45, 50000,
+                NULL)
+                """
+            )
+
+    def test_can_insert_null_local_type(self):
+        self._create_row()
+        self.assertEqual(models.Watercourse.objects.first().local_type, "")
+
+    def test_can_update_with_null_local_type(self):
+        self._create_row("'ditch'")
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE openhigis.Watercourse SET localType=NULL")
+        self.assertEqual(models.Watercourse.objects.first().local_type, "")
+
+
 class StandingWaterSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
     def setUp(self):
         super().setUp()

@@ -179,7 +179,7 @@ BEGIN
         (gentity_ptr_id, geom2100, local_type, man_made, river_basin_id, imported_id,
         level_of_detail)
     VALUES
-        (gentity_id, NEW.geometry, NEW.localType, NEW.origin = 'manMade',
+        (gentity_id, NEW.geometry, COALESCE(NEW.localType, ''), NEW.origin = 'manMade',
          new_river_basin_id, NEW.id, NEW.levelOfDetail);
 END;
 $$ LANGUAGE plpgsql;
@@ -194,7 +194,7 @@ BEGIN
     UPDATE enhydris_openhigis_surfacewater
         SET
             geom2100=NEW.geometry,
-            local_type=NEW.localType,
+            local_type=COALESCE(NEW.localType, ''),
             man_made=(NEW.origin = 'manMade'),
             river_basin_id=new_river_basin_id,
             level_of_detail=NEW.levelOfDetail
