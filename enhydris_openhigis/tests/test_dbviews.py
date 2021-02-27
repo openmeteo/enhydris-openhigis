@@ -70,6 +70,21 @@ class SridMixin:
         self.assertAlmostEqual(self.row[1], 4000000.00, places=2)
 
 
+class HydroNodeSetupInitialRowMixin:
+    def setUp(self):
+        super().setUp()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.HydroNode
+                (geographicalName, hydroId, remarks, geometry, id, elevation)
+                VALUES
+                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1901,
+                 782.5)
+                """
+            )
+
+
 class RiverBasinDistrictSetupInitialRowMixin:
     def setUp(self):
         with connection.cursor() as cursor:
@@ -142,17 +157,24 @@ class RiverBasinSetupInitialRowMixin:
             cursor.execute(
                 """
                 INSERT INTO openhigis.RiverBasin
-                (geographicalName, hydroId, remarks, geometry, origin, meanSlope,
-                meanElevation, maxRiverLength, id)
+                (geographicalName, hydroId, remarks, geometry, origin, basinOrder,
+                    basinOrderScheme, basinOrderScope, meanSlope,
+                    meanElevation, maxRiverLength, id, area, meanCN,
+                    concentrationTime, watercourseMainLength, watercourseMainSlope,
+                    outletElevation, outlet)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', 0.15, 200, 27.5, 1851)
+                    'manMade', '18', 'strahler', 'go figure', 0.15, 200, 27.5,
+                    1851, 680, 17, 42, 27.7, 0.288, 289, 1901)
                 """
             )
         self.expected_basin_id = models.RiverBasin.objects.first().id
 
 
-class DrainageBasinSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
+class DrainageBasinSetupInitialRowMixin(
+    RiverBasinSetupInitialRowMixin,
+    HydroNodeSetupInitialRowMixin,
+):
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
@@ -160,12 +182,15 @@ class DrainageBasinSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 """
                 INSERT INTO openhigis.DrainageBasin
                 (geographicalName, hydroId, remarks, geometry, origin, basinOrder,
-                basinOrderScheme, basinOrderScope, totalArea, meanSlope, meanElevation,
-                maxRiverLength, id, riverBasin)
+                    basinOrderScheme, basinOrderScope, totalArea, meanSlope,
+                    meanElevation, maxRiverLength, id, riverBasin, area, meanCN,
+                    concentrationTime, watercourseMainLength, watercourseMainSlope,
+                    outletElevation, outlet
+                )
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 27.5, 1852,
-                1851)
+                    'manMade', '18', 'strahler', 'go figure', 680, 0.15, 200, 27.5,
+                    1852, 1851, 680, 17, 42, 27.7, 0.288, 289, 1901)
                 """
             )
 
@@ -187,6 +212,39 @@ class BasinsAdditionalTestsMixin:
     def test_max_river_length(self):
         self.assertAlmostEqual(
             self.model.objects.first().max_river_length, self.expected_max_river_length
+        )
+
+    def test_area(self):
+        self.assertAlmostEqual(self.model.objects.first().area, self.expected_area)
+
+    def test_mean_cn(self):
+        self.assertEqual(self.model.objects.first().mean_cn, self.expected_mean_cn)
+
+    def test_concentration_time(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().concentration_time,
+            self.expected_concentration_time,
+        )
+
+    def test_outlet_id(self):
+        self.assertEqual(self.model.objects.first().outlet_id, self.expected_outlet_id)
+
+    def test_watercourse_main_length(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().watercourse_main_length,
+            self.expected_watercourse_main_length,
+        )
+
+    def test_watercourse_main_slope(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().watercourse_main_slope,
+            self.expected_watercourse_main_slope,
+        )
+
+    def test_outlet_elevation(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().outlet_elevation,
+            self.expected_outlet_elevation,
         )
 
 
@@ -249,6 +307,16 @@ class DrainageBasinInsertTestCase(
     expected_mean_elevation = 200
     expected_max_river_length = 27.5
     expected_imported_id = 1852
+    expected_area = 680
+    expected_mean_cn = 17
+    expected_concentration_time = 42
+    expected_watercourse_main_length = 27.7
+    expected_watercourse_main_slope = 0.288
+    expected_outlet_elevation = 289
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
 
 class DrainageBasinUpdateTestCase(
@@ -276,6 +344,16 @@ class DrainageBasinUpdateTestCase(
     expected_mean_elevation = 300
     expected_max_river_length = 35.3
     expected_imported_id = 1852
+    expected_area = 681
+    expected_mean_cn = 18
+    expected_concentration_time = 43
+    expected_watercourse_main_length = 27.8
+    expected_watercourse_main_slope = 0.289
+    expected_outlet_elevation = 290
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
     def setUp(self):
         super().setUp()
@@ -284,18 +362,25 @@ class DrainageBasinUpdateTestCase(
                 """
                 UPDATE openhigis.{}
                 SET
-                geographicalName='Epirus',
-                hydroId='08',
-                remarks='Hello planet',
-                geometry='SRID=2100;POINT(550000 4500000)',
-                origin='natural',
-                basinOrder='19',
-                basinOrderScheme='mahler',
-                basinOrderScope='go figure again',
-                totalArea=690,
-                meanSlope=0.16,
-                meanElevation=300,
-                maxRiverLength=35.3
+                    geographicalName='Epirus',
+                    hydroId='08',
+                    remarks='Hello planet',
+                    geometry='SRID=2100;POINT(550000 4500000)',
+                    origin='natural',
+                    basinOrder='19',
+                    basinOrderScheme='mahler',
+                    basinOrderScope='go figure again',
+                    totalArea=690,
+                    meanSlope=0.16,
+                    meanElevation=300,
+                    maxRiverLength=35.3,
+                    area=681,
+                    meanCN=18,
+                    concentrationTime=43,
+                    watercourseMainlength=27.8,
+                    watercourseMainSlope=0.289,
+                    outletElevation=290,
+                    outlet=1901
                 WHERE geographicalName='Attica'
                 """.format(
                     self.view_name
@@ -318,6 +403,7 @@ class DrainageBasinSridTestCase(SridMixin, DrainageBasinSetupInitialRowMixin, Te
 class RiverBasinInsertTestCase(
     EssentialTestsMixin,
     RiverBasinSetupInitialRowMixin,
+    HydroNodeSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
     ImportedIdTestsMixin,
     TestCase,
@@ -335,13 +421,25 @@ class RiverBasinInsertTestCase(
     expected_mean_elevation = 200
     expected_max_river_length = 27.5
     expected_imported_id = 1851
+    expected_area = 680
+    expected_mean_cn = 17
+    expected_concentration_time = 42
+    expected_watercourse_main_length = 27.7
+    expected_watercourse_main_slope = 0.288
+    expected_outlet_elevation = 289
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
+
     model = models.RiverBasin
     view_name = "RiverBasin"
 
 
 class RiverBasinUpdateTestCase(
     EssentialTestsMixin,
-    DrainageBasinSetupInitialRowMixin,
+    RiverBasinSetupInitialRowMixin,
+    HydroNodeSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
     ImportedIdTestsMixin,
     TestCase,
@@ -359,6 +457,16 @@ class RiverBasinUpdateTestCase(
     expected_mean_elevation = 300
     expected_max_river_length = 35.3
     expected_imported_id = 1851
+    expected_area = 681
+    expected_mean_cn = 18
+    expected_concentration_time = 43
+    expected_watercourse_main_length = 27.8
+    expected_watercourse_main_slope = 0.289
+    expected_outlet_elevation = 290
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
     def setUp(self):
         super().setUp()
@@ -367,14 +475,24 @@ class RiverBasinUpdateTestCase(
                 """
                 UPDATE openhigis.{}
                 SET
-                geographicalName='Epirus',
-                hydroId='08',
-                remarks='Hello planet',
-                geometry='SRID=2100;POINT(550000 4500000)',
-                origin='natural',
-                meanSlope=0.16,
-                meanElevation=300,
-                maxRiverLength=35.3
+                    geographicalName='Epirus',
+                    hydroId='08',
+                    remarks='Hello planet',
+                    geometry='SRID=2100;POINT(550000 4500000)',
+                    origin='natural',
+                    basinOrder='19',
+                    basinOrderScheme='mahler',
+                    basinOrderScope='go figure again',
+                    meanSlope=0.16,
+                    meanElevation=300,
+                    maxRiverLength=35.3,
+                    area=681,
+                    meanCN=18,
+                    concentrationTime=43,
+                    watercourseMainlength=27.8,
+                    watercourseMainSlope=0.289,
+                    outletElevation=290,
+                    outlet=1901
                 WHERE geographicalName='Attica'
                 """.format(
                     self.view_name
@@ -408,7 +526,9 @@ class InsertEntityWithNullGeographicalNameTestCase(TestCase):
         self.assertEqual(models.RiverBasinDistrict.objects.first().name, "")
 
 
-class StationBasinSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
+class StationBasinSetupInitialRowMixin(
+    RiverBasinSetupInitialRowMixin, HydroNodeSetupInitialRowMixin
+):
     def setUp(self):
         super().setUp()
         mommy.make(models.Station, id=1852, name="Χόμπιτον")
@@ -417,18 +537,67 @@ class StationBasinSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 """
                 INSERT INTO openhigis.StationBasin
                 (geographicalName, hydroId, remarks, geometry, origin,
-                meanSlope, meanElevation, maxRiverLength, id, riverBasin)
+                    meanSlope, meanElevation, maxRiverLength, id, riverBasin,
+                    basinOrder, basinOrderScheme, basinOrderScope, area, meanCN,
+                    concentrationTime, watercourseMainLength, watercourseMainSlope,
+                    stationElevation, outlet
+                )
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', 0.15, 200, 27.5, 1852, 1851)
+                    'manMade', 0.15, 200, 27.5, 1852, 1851, '18', 'strahler',
+                    'go figure', 680, 17, 42, 27.7, 0.288, 289, 1901
+                )
                 """
             )
+
+
+class StationBasinAdditionalTestsMixin:
+    def test_area(self):
+        self.assertAlmostEqual(
+            models.StationBasin.objects.first().area, self.expected_area
+        )
+
+    def test_mean_cn(self):
+        self.assertEqual(
+            models.StationBasin.objects.first().mean_cn, self.expected_mean_cn
+        )
+
+    def test_concentration_time(self):
+        self.assertAlmostEqual(
+            models.StationBasin.objects.first().concentration_time,
+            self.expected_concentration_time,
+        )
+
+    def test_outlet_id(self):
+        self.assertEqual(
+            models.StationBasin.objects.first().outlet_id, self.expected_outlet_id
+        )
+
+    def test_watercourse_main_length(self):
+        self.assertAlmostEqual(
+            models.StationBasin.objects.first().watercourse_main_length,
+            self.expected_watercourse_main_length,
+        )
+
+    def test_watercourse_main_slope(self):
+        self.assertAlmostEqual(
+            models.StationBasin.objects.first().watercourse_main_slope,
+            self.expected_watercourse_main_slope,
+        )
+
+    def test_outlet_elevation(self):
+        self.assertAlmostEqual(
+            models.StationBasin.objects.first().outlet_elevation,
+            self.expected_outlet_elevation,
+        )
 
 
 class StationBasinInsertTestCase(
     EssentialTestsMixin,
     StationBasinSetupInitialRowMixin,
     BasinsAdditionalTestsMixin,
+    HydroOrderTestsMixin,
+    StationBasinAdditionalTestsMixin,
     TestCase,
 ):
     model = models.StationBasin
@@ -443,6 +612,19 @@ class StationBasinInsertTestCase(
     expected_mean_slope = 0.15
     expected_mean_elevation = 200
     expected_max_river_length = 27.5
+    expected_hydro_order = "18"
+    expected_hydro_order_scheme = "strahler"
+    expected_hydro_order_scope = "go figure"
+    expected_area = 680
+    expected_mean_cn = 17
+    expected_concentration_time = 42
+    expected_watercourse_main_length = 27.7
+    expected_watercourse_main_slope = 0.288
+    expected_outlet_elevation = 289
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
     def test_geographical_name(self):
         with connection.cursor() as cursor:
@@ -454,7 +636,9 @@ class StationBasinInsertTestCase(
 class StationBasinUpdateTestCase(
     EssentialTestsMixin,
     StationBasinSetupInitialRowMixin,
+    HydroOrderTestsMixin,
     BasinsAdditionalTestsMixin,
+    StationBasinAdditionalTestsMixin,
     TestCase,
 ):
     model = models.StationBasin
@@ -469,6 +653,19 @@ class StationBasinUpdateTestCase(
     expected_mean_slope = 0.16
     expected_mean_elevation = 300
     expected_max_river_length = 35.3
+    expected_hydro_order = "19"
+    expected_hydro_order_scheme = "mahler"
+    expected_hydro_order_scope = "figure go"
+    expected_area = 681
+    expected_mean_cn = 18
+    expected_concentration_time = 43
+    expected_watercourse_main_length = 27.8
+    expected_watercourse_main_slope = 0.289
+    expected_outlet_elevation = 290
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
     def setUp(self):
         super().setUp()
@@ -477,14 +674,24 @@ class StationBasinUpdateTestCase(
                 """
                 UPDATE openhigis.{}
                 SET
-                geographicalName='Epirus',
-                hydroId='08',
-                remarks='Hello planet',
-                geometry='SRID=2100;POINT(550000 4500000)',
-                origin='natural',
-                meanSlope=0.16,
-                meanElevation=300,
-                maxRiverLength=35.3
+                    geographicalName='Epirus',
+                    hydroId='08',
+                    remarks='Hello planet',
+                    geometry='SRID=2100;POINT(550000 4500000)',
+                    origin='natural',
+                    meanSlope=0.16,
+                    meanElevation=300,
+                    maxRiverLength=35.3,
+                    basinOrder=19,
+                    basinOrderScheme='mahler',
+                    basinOrderScope='figure go',
+                    area=681,
+                    meanCN=18,
+                    concentrationTime=43,
+                    watercourseMainlength=27.8,
+                    watercourseMainSlope=0.289,
+                    stationElevation=290,
+                    outlet=1901
                 WHERE remarks='Hello world'
                 """.format(
                     self.view_name
@@ -504,21 +711,6 @@ class StationBasinSridTestCase(SridMixin, StationBasinSetupInitialRowMixin, Test
     model = models.StationBasin
     view_name = "StationBasin"
     condition = "remarks = 'Hello world'"
-
-
-class HydroNodeSetupInitialRowMixin:
-    def setUp(self):
-        super().setUp()
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                INSERT INTO openhigis.HydroNode
-                (geographicalName, hydroId, remarks, geometry, id, elevation)
-                VALUES
-                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1901,
-                 782.5)
-                """
-            )
 
 
 class HydroNodeAdditionalTestsMixin:
@@ -751,6 +943,34 @@ class WatercourseSridTestCase(SridMixin, WatercourseSetupInitialRowMixin, TestCa
     model = models.Watercourse
     view_name = "Watercourse"
     condition = "remarks = 'Hello world'"
+
+
+class NullLocalTypeTestCase(TestCase):
+    def _create_row(self, local_type_sql_expression="NULL"):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                INSERT INTO openhigis.Watercourse
+                (localType, geographicalName, hydroId, remarks, geometry, origin,
+                streamOrder, streamOrderScheme, streamOrderScope, id, drainsBasin,
+                width, delineationKnown, length, level, slope, levelOfDetail, outlet)
+                VALUES
+                ({local_type_sql_expression}, 'Attica', '06', 'Hello world',
+                'SRID=2100;POINT(500000 4000000)', 'manMade', '18', 'strahler',
+                'go figure', 1852, 1851, 2.718, TRUE, 3.14159, 776.3, 0.45, 50000,
+                NULL)
+                """
+            )
+
+    def test_can_insert_null_local_type(self):
+        self._create_row()
+        self.assertEqual(models.Watercourse.objects.first().local_type, "")
+
+    def test_can_update_with_null_local_type(self):
+        self._create_row("'ditch'")
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE openhigis.Watercourse SET localType=NULL")
+        self.assertEqual(models.Watercourse.objects.first().local_type, "")
 
 
 class StandingWaterSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):

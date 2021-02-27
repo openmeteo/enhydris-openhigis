@@ -71,7 +71,11 @@ class RiverBasinDistrict(Garea, GGRS87Mixin, ImportedIdMixin):
     pass
 
 
-class BasinMixin(models.Model):
+class HydroNode(Gpoint, GGRS87Mixin, ImportedIdMixin):
+    pass
+
+
+class BasinMixin(HydroOrderCodeMixin):
     """Base class for drainage basins and river basins.
 
     INSPIRE uses the term "drainage basin" both for river basins and subbasins; a river
@@ -88,6 +92,15 @@ class BasinMixin(models.Model):
     mean_slope = models.FloatField(blank=True, null=True)
     mean_elevation = models.FloatField(blank=True, null=True)
     max_river_length = models.FloatField(blank=True, null=True)
+    area = models.FloatField(blank=True, null=True)
+    mean_cn = models.IntegerField(blank=True, null=True)
+    concentration_time = models.FloatField(blank=True, null=True)
+    outlet = models.ForeignKey(
+        HydroNode, on_delete=models.CASCADE, null=True, blank=True
+    )
+    watercourse_main_length = models.FloatField(blank=True, null=True)
+    watercourse_main_slope = models.FloatField(blank=True, null=True)
+    outlet_elevation = models.FloatField(blank=True, null=True)
 
     class Meta:
         abstract = True
@@ -101,7 +114,7 @@ class RiverBasin(Basin):
     pass
 
 
-class DrainageBasin(Basin, HydroOrderCodeMixin):
+class DrainageBasin(Basin):
     """A subbasin.
 
     We use the term "DrainageBasin" differently from INSPIRE. Read the "BasinMixin"
@@ -128,10 +141,6 @@ class SurfaceWater(Gentity, GGRS87Mixin, ImportedIdMixin):
         RiverBasin, on_delete=models.CASCADE, null=True, blank=True
     )
     level_of_detail = models.IntegerField(blank=True, null=True)
-
-
-class HydroNode(Gpoint, GGRS87Mixin, ImportedIdMixin):
-    pass
 
 
 class Watercourse(SurfaceWater, HydroOrderCodeMixin):
