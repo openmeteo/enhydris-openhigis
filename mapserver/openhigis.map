@@ -200,7 +200,7 @@ MAP
         PROJECTION
             "init=epsg:2100"
         END
-        TEMPLATE "wmspopup-basin.html"
+        TEMPLATE "wmspopup-stationbasin.html"
         CLASS
             NAME "Station basins"
             STYLE

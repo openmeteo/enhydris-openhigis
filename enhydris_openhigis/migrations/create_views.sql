@@ -144,26 +144,53 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION insert_into_basin(NEW ANYELEMENT, gentity_id INTEGER)
 RETURNS void
 AS $$
+DECLARE
+    new_outlet_id INTEGER;
 BEGIN
+    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.outlet;
     INSERT INTO enhydris_openhigis_basin
         (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation, max_river_length,
-        imported_id)
+            imported_id, hydro_order, hydro_order_scheme, hydro_order_scope, area,
+            mean_cn, concentration_time, outlet_id, watercourse_main_length,
+            watercourse_main_slope, outlet_elevation
+        )
     VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
-        NEW.meanSlope, NEW.meanElevation, NEW.maxRiverLength, NEW.id);
+        NEW.meanSlope, NEW.meanElevation, NEW.maxRiverLength, NEW.id,
+        COALESCE(NEW.basinOrder, ''), COALESCE(NEW.basinOrderScheme, ''),
+        COALESCE(NEW.basinOrderScope, ''),
+        NEW.area, NEW.meanCN, NEW.concentrationTime, new_outlet_id,
+        NEW.watercourseMainLength, NEW.watercourseMainSlope,
+        NEW.outletElevation
+    );
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_basin(gentity_id INTEGER, OLD ANYELEMENT, NEW ANYELEMENT)
 RETURNS void
 AS $$
+DECLARE
+    new_outlet_id INTEGER;
 BEGIN
+    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.outlet;
     UPDATE enhydris_openhigis_basin
         SET
             geom2100=NEW.geometry,
             man_made=(NEW.origin = 'manMade'),
             mean_slope=NEW.meanSlope,
             mean_elevation=NEW.meanElevation,
-            max_river_length=NEW.maxRiverLength
+            max_river_length=NEW.maxRiverLength,
+            hydro_order=COALESCE(NEW.basinOrder, ''),
+            hydro_order_scheme=COALESCE(NEW.basinOrderScheme, ''),
+            hydro_order_scope=COALESCE(NEW.basinOrderScope, ''),
+            area=NEW.area,
+            mean_cn=NEW.meanCN,
+            concentration_time=NEW.concentrationTime,
+            outlet_id=new_outlet_id,
+            watercourse_main_length=NEW.watercourseMainLength,
+            watercourse_main_slope=NEW.watercourseMainSlope,
+            outlet_elevation=NEW.outletElevation
         WHERE garea_ptr_id=gentity_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -290,14 +317,20 @@ CREATE VIEW DrainageBasin
              WHEN basin.man_made THEN 'manMade'
              ELSE 'natural'
              END AS origin,
-        drb.hydro_order AS basinOrder,
-        drb.hydro_order_scheme AS basinOrderScheme,
-        drb.hydro_order_scope AS basinOrderScope,
-        ST_Area(basin.geom2100) / 1000000 AS area,
+        basin.hydro_order AS basinOrder,
+        basin.hydro_order_scheme AS basinOrderScheme,
+        basin.hydro_order_scope AS basinOrderScope,
         drb.total_area AS totalArea,
         basin.mean_slope AS meanSlope,
         basin.mean_elevation AS meanElevation,
-        basin.max_river_length AS maxRiverLength
+        basin.max_river_length AS maxRiverLength,
+        basin.area,
+        basin.mean_cn AS meanCN,
+        basin.concentration_time AS concentrationTime,
+        outlet.imported_id AS outlet,
+        basin.watercourse_main_length AS watercourseMainLength,
+        basin.watercourse_main_slope AS watercourseMainSlope,
+        basin.outlet_elevation AS outletElevation
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_basin basin
@@ -307,7 +340,9 @@ CREATE VIEW DrainageBasin
         INNER JOIN enhydris_openhigis_riverbasin riverbasin
             ON drb.river_basin_id = riverbasin.basin_ptr_id
         INNER JOIN enhydris_openhigis_basin riverbasin_basin
-            ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id;
+            ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id
+        LEFT JOIN enhydris_openhigis_hydronode outlet
+            ON basin.outlet_id = outlet.imported_id;
 
 CREATE OR REPLACE FUNCTION insert_into_DrainageBasin() RETURNS TRIGGER
 AS $$
@@ -321,12 +356,8 @@ BEGIN
         FROM enhydris_openhigis_basin
         WHERE imported_id = NEW.riverBasin;
     INSERT INTO enhydris_openhigis_drainagebasin
-        (basin_ptr_id, river_basin_id, hydro_order, hydro_order_scheme,
-        hydro_order_scope, total_area)
-        VALUES (gentity_id, new_river_basin_id, COALESCE(NEW.basinOrder, ''),
-            COALESCE(NEW.basinOrderScheme, ''),
-            COALESCE(NEW.basinOrderScope, ''), NEW.totalArea
-        );
+        (basin_ptr_id, river_basin_id, total_area)
+        VALUES (gentity_id, new_river_basin_id, NEW.totalArea);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -351,9 +382,6 @@ BEGIN
     UPDATE enhydris_openhigis_drainagebasin
     SET
         river_basin_id=new_river_basin_id,
-        hydro_order=COALESCE(NEW.basinOrder, ''),
-        hydro_order_scheme=COALESCE(NEW.basinOrderScheme, ''),
-        hydro_order_scope=COALESCE(NEW.basinOrderScope, ''),
         total_area=NEW.totalArea
         WHERE basin_ptr_id=gentity_id;
     RETURN NEW;
@@ -400,16 +428,27 @@ CREATE VIEW RiverBasin
              WHEN basin.man_made THEN 'manMade'
              ELSE 'natural'
              END AS origin,
-        ST_Area(basin.geom2100) / 1000000 AS area,
+        basin.hydro_order AS basinOrder,
+        basin.hydro_order_scheme AS basinOrderScheme,
+        basin.hydro_order_scope AS basinOrderScope,
         basin.mean_slope AS meanSlope,
         basin.mean_elevation AS meanElevation,
-        basin.max_river_length AS maxRiverLength
+        basin.max_river_length AS maxRiverLength,
+        basin.area,
+        basin.mean_cn AS meanCN,
+        basin.concentration_time AS concentrationTime,
+        outlet.imported_id AS outlet,
+        basin.watercourse_main_length AS watercourseMainLength,
+        basin.watercourse_main_slope AS watercourseMainSlope,
+        basin.outlet_elevation AS outletElevation
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_basin basin
             ON basin.garea_ptr_id = g.id
         INNER JOIN enhydris_openhigis_riverbasin rb
-        ON rb.basin_ptr_id = g.id;
+            ON rb.basin_ptr_id = g.id
+        LEFT JOIN enhydris_openhigis_hydronode outlet
+            ON basin.outlet_id = outlet.imported_id;
 
 CREATE OR REPLACE FUNCTION insert_into_RiverBasin() RETURNS TRIGGER
 AS $$
@@ -480,7 +519,16 @@ CREATE VIEW StationBasin
              WHEN sb.man_made THEN 'manMade'
              ELSE 'natural'
              END AS origin,
-        ST_Area(sb.geom2100) / 1000000 AS area,
+        sb.area,
+        sb.mean_cn AS meanCN,
+        sb.concentration_time AS concentrationTime,
+        outlet.imported_id AS outlet,
+        sb.watercourse_main_length AS watercourseMainLength,
+        sb.watercourse_main_slope AS watercourseMainSlope,
+        sb.outlet_elevation AS stationElevation,
+        sb.hydro_order AS basinOrder,
+        sb.hydro_order_scheme AS basinOrderScheme,
+        sb.hydro_order_scope AS basinOrderScope,
         sb.mean_slope AS meanSlope,
         sb.mean_elevation AS meanElevation,
         sb.max_river_length AS maxRiverLength
@@ -493,24 +541,38 @@ CREATE VIEW StationBasin
         INNER JOIN enhydris_openhigis_basin riverbasin_basin
         ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id
         INNER JOIN enhydris_gentity station
-        ON station.id = sb.station_id;
+        ON station.id = sb.station_id 
+        LEFT JOIN enhydris_openhigis_hydronode outlet
+            ON sb.outlet_id = outlet.imported_id;
 
 CREATE OR REPLACE FUNCTION insert_into_StationBasin() RETURNS TRIGGER
 AS $$
 DECLARE
     gentity_id INTEGER;
     new_river_basin_id INTEGER;
+    new_outlet_id INTEGER;
 BEGIN
     gentity_id = openhigis.insert_into_garea(NEW, 5);
     SELECT garea_ptr_id INTO new_river_basin_id
         FROM enhydris_openhigis_basin
         WHERE imported_id = NEW.riverBasin;
+    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.outlet;
     INSERT INTO enhydris_openhigis_stationbasin
         (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation,
-            max_river_length, river_basin_id, station_id)
+            max_river_length, river_basin_id, station_id, hydro_order,
+            hydro_order_scheme, hydro_order_scope, area, mean_cn,
+            concentration_time, outlet_id, watercourse_main_length,
+            watercourse_main_slope, outlet_elevation
+        )
         VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
             NEW.meanSlope, NEW.meanElevation, NEW.maxRiverLength,
-            new_river_basin_id, NEW.id);
+            new_river_basin_id, NEW.id, COALESCE(NEW.basinOrder, ''),
+            COALESCE(NEW.basinOrderScheme, ''), COALESCE(NEW.basinOrderScope, ''),
+            NEW.area, NEW.meanCN, NEW.concentrationTime, new_outlet_id,
+            NEW.watercourseMainLength, NEW.watercourseMainSlope,
+            NEW.stationElevation
+        );
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -524,12 +586,15 @@ AS $$
 DECLARE
     gentity_id INTEGER;
     new_river_basin_id INTEGER;
+    new_outlet_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_stationbasin
         WHERE station_id=OLD.id;
     SELECT garea_ptr_id INTO new_river_basin_id
         FROM enhydris_openhigis_basin
         WHERE imported_id = NEW.riverBasin;
+    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.outlet;
     PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     UPDATE enhydris_openhigis_stationbasin
     SET
@@ -538,7 +603,17 @@ BEGIN
         mean_slope=NEW.meanSlope,
         mean_elevation=NEW.meanElevation,
         max_river_length=NEW.maxRiverLength,
-        river_basin_id=new_river_basin_id
+        river_basin_id=new_river_basin_id,
+        hydro_order=COALESCE(NEW.basinOrder, ''),
+        hydro_order_scheme=COALESCE(NEW.basinOrderScheme, ''),
+        hydro_order_scope=COALESCE(NEW.basinOrderScope, ''),
+        area=NEW.area,
+        mean_cn=NEW.meanCN,
+        concentration_time=NEW.concentrationTime,
+        outlet_id=new_outlet_id,
+        watercourse_main_length=NEW.watercourseMainLength,
+        watercourse_main_slope=NEW.watercourseMainSlope,
+        outlet_elevation=NEW.stationElevation
         WHERE station_id=OLD.id;
     RETURN NEW;
 END;
