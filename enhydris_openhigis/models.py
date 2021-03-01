@@ -91,7 +91,6 @@ class BasinMixin(HydroOrderCodeMixin):
     man_made = models.BooleanField(blank=True, null=True)
     mean_slope = models.FloatField(blank=True, null=True)
     mean_elevation = models.FloatField(blank=True, null=True)
-    max_river_length = models.FloatField(blank=True, null=True)
     area = models.FloatField(blank=True, null=True)
     mean_cn = models.IntegerField(blank=True, null=True)
     concentration_time = models.FloatField(blank=True, null=True)

@@ -9,12 +9,13 @@ Object.assign(enhydris.map, {
   },
 
   addGeoOverlayLayers() {
-    this.addOpenhiLayer('Watercourses', 'Υδρογραφικό δίκτυο', '#33CCFF', '⌇', false);
+    this.addOpenhiLayer('Watercourses', 'Υδατορεύματα', '#33CCFF', '⌇', false);
     this.addOpenhiLayer('StandingWaters', 'Λίμνες', '#33CCFF', '■', false);
     this.addOpenhiLayer(
       'StationBasins', 'Λεκάνες ανάντη σταθμών', '#0066FF', '▮', false,
     );
     this.addOpenhiLayer('RiverBasins', 'Λεκάνες απορροής', '#0066FF', '▮', false);
+    this.addOpenhiLayer('DrainageBasins', 'Υπολεκάνες απορροής', '#0066FF', '▮', false);
   },
 
   /* This is a replacement for BetterWMS's getFeatureInfoUrl() which adds the
