@@ -9,7 +9,7 @@ Object.assign(enhydris.map, {
   },
 
   addGeoOverlayLayers() {
-    this.addOpenhiLayer('Watercourses', 'Υδρογραφικό δίκτυο', '#33CCFF', '⌇', false);
+    this.addOpenhiLayer('Watercourses', 'Υδατορεύματα', '#33CCFF', '⌇', false);
     this.addOpenhiLayer('StandingWaters', 'Λίμνες', '#33CCFF', '■', false);
     this.addOpenhiLayer(
       'StationBasins', 'Λεκάνες ανάντη σταθμών', '#0066FF', '▮', false,
