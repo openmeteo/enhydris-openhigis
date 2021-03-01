@@ -15,6 +15,7 @@ Object.assign(enhydris.map, {
       'StationBasins', 'Λεκάνες ανάντη σταθμών', '#0066FF', '▮', false,
     );
     this.addOpenhiLayer('RiverBasins', 'Λεκάνες απορροής', '#0066FF', '▮', false);
+    this.addOpenhiLayer('DrainageBasins', 'Υπολεκάνες απορροής', '#0066FF', '▮', false);
   },
 
   /* This is a replacement for BetterWMS's getFeatureInfoUrl() which adds the
