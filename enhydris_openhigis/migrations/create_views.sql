@@ -150,13 +150,13 @@ BEGIN
     SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
         WHERE imported_id=NEW.outlet;
     INSERT INTO enhydris_openhigis_basin
-        (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation, max_river_length,
+        (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation,
             imported_id, hydro_order, hydro_order_scheme, hydro_order_scope, area,
             mean_cn, concentration_time, outlet_id, watercourse_main_length,
             watercourse_main_slope, outlet_elevation
         )
     VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
-        NEW.meanSlope, NEW.meanElevation, NEW.maxRiverLength, NEW.id,
+        NEW.meanSlope, NEW.meanElevation, NEW.id,
         COALESCE(NEW.basinOrder, ''), COALESCE(NEW.basinOrderScheme, ''),
         COALESCE(NEW.basinOrderScope, ''),
         NEW.area, NEW.meanCN, NEW.concentrationTime, new_outlet_id,
@@ -180,7 +180,6 @@ BEGIN
             man_made=(NEW.origin = 'manMade'),
             mean_slope=NEW.meanSlope,
             mean_elevation=NEW.meanElevation,
-            max_river_length=NEW.maxRiverLength,
             hydro_order=COALESCE(NEW.basinOrder, ''),
             hydro_order_scheme=COALESCE(NEW.basinOrderScheme, ''),
             hydro_order_scope=COALESCE(NEW.basinOrderScope, ''),
@@ -323,7 +322,6 @@ CREATE VIEW DrainageBasin
         drb.total_area AS totalArea,
         basin.mean_slope AS meanSlope,
         basin.mean_elevation AS meanElevation,
-        basin.max_river_length AS maxRiverLength,
         basin.area,
         basin.mean_cn AS meanCN,
         basin.concentration_time AS concentrationTime,
@@ -433,7 +431,6 @@ CREATE VIEW RiverBasin
         basin.hydro_order_scope AS basinOrderScope,
         basin.mean_slope AS meanSlope,
         basin.mean_elevation AS meanElevation,
-        basin.max_river_length AS maxRiverLength,
         basin.area,
         basin.mean_cn AS meanCN,
         basin.concentration_time AS concentrationTime,
@@ -530,8 +527,7 @@ CREATE VIEW StationBasin
         sb.hydro_order_scheme AS basinOrderScheme,
         sb.hydro_order_scope AS basinOrderScope,
         sb.mean_slope AS meanSlope,
-        sb.mean_elevation AS meanElevation,
-        sb.max_river_length AS maxRiverLength
+        sb.mean_elevation AS meanElevation
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_stationbasin sb
@@ -560,13 +556,13 @@ BEGIN
         WHERE imported_id=NEW.outlet;
     INSERT INTO enhydris_openhigis_stationbasin
         (garea_ptr_id, geom2100, man_made, mean_slope, mean_elevation,
-            max_river_length, river_basin_id, station_id, hydro_order,
+            river_basin_id, station_id, hydro_order,
             hydro_order_scheme, hydro_order_scope, area, mean_cn,
             concentration_time, outlet_id, watercourse_main_length,
             watercourse_main_slope, outlet_elevation
         )
         VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
-            NEW.meanSlope, NEW.meanElevation, NEW.maxRiverLength,
+            NEW.meanSlope, NEW.meanElevation,
             new_river_basin_id, NEW.id, COALESCE(NEW.basinOrder, ''),
             COALESCE(NEW.basinOrderScheme, ''), COALESCE(NEW.basinOrderScope, ''),
             NEW.area, NEW.meanCN, NEW.concentrationTime, new_outlet_id,
@@ -602,7 +598,6 @@ BEGIN
         man_made=(NEW.origin = 'manMade'),
         mean_slope=NEW.meanSlope,
         mean_elevation=NEW.meanElevation,
-        max_river_length=NEW.maxRiverLength,
         river_basin_id=new_river_basin_id,
         hydro_order=COALESCE(NEW.basinOrder, ''),
         hydro_order_scheme=COALESCE(NEW.basinOrderScheme, ''),
