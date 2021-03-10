@@ -1038,6 +1038,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE
     enhydris_openhigis_station,
     enhydris_openhigis_surfacewater,
     enhydris_openhigis_watercourse,
+    enhydris_openhigis_watercourselink,
     enhydris_openhigis_standingwater,
     enhydris_openhigis_hydronode,
     enhydris_garea,
