@@ -802,6 +802,9 @@ class SurfaceWaterTestsMixin:
             self.model.objects.first().level_of_detail, self.expected_level_of_detail
         )
 
+    def test_outlet(self):
+        self.assertEqual(self.model.objects.first().outlet_id, self.expected_outlet_id)
+
 
 class WatercourseTestsMixin:
     def test_width(self):
@@ -818,9 +821,6 @@ class WatercourseTestsMixin:
 
     def test_level(self):
         self.assertAlmostEqual(self.model.objects.first().level, self.expected_level)
-
-    def test_outlet(self):
-        self.assertEqual(self.model.objects.first().outlet_id, self.expected_outlet_id)
 
     def test_slope(self):
         self.assertEqual(self.model.objects.first().slope, self.expected_slope)
@@ -959,7 +959,9 @@ class NullLocalTypeTestCase(TestCase):
         self.assertEqual(models.Watercourse.objects.first().local_type, "")
 
 
-class StandingWaterSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
+class StandingWaterSetupInitialRowMixin(
+    RiverBasinSetupInitialRowMixin, HydroNodeSetupInitialRowMixin
+):
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
@@ -967,10 +969,10 @@ class StandingWaterSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 """
                 INSERT INTO openhigis.StandingWater
                 (geographicalName, hydroId, remarks, geometry, origin, id, localType,
-                drainsBasin, elevation, meanDepth, levelOfDetail)
+                drainsBasin, elevation, meanDepth, levelOfDetail, surfaceArea, outlet)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', 1852, 'pool', 1851, 784.1, 18.7, 50000)
+                'manMade', 1852, 'pool', 1851, 784.1, 18.7, 50000, 4285.3, 1901)
                 """
             )
         self.expected_surface_water_id = models.StandingWater.objects.first().id
@@ -985,6 +987,11 @@ class StandingWaterTestsMixin:
     def test_mean_depth(self):
         self.assertAlmostEqual(
             self.model.objects.first().mean_depth, self.expected_mean_depth
+        )
+
+    def test_surface_area(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().surface_area, self.expected_surface_area
         )
 
 
@@ -1008,6 +1015,11 @@ class StandingWaterInsertTestCase(
     expected_level_of_detail = 50000
     expected_elevation = 784.1
     expected_mean_depth = 18.7
+    expected_surface_area = 4285.3
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
 
 class StandingWaterUpdateTestCase(
@@ -1030,6 +1042,11 @@ class StandingWaterUpdateTestCase(
     expected_level_of_detail = 100000
     expected_elevation = 784.2
     expected_mean_depth = 18.8
+    expected_surface_area = 5432.1
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
     def setUp(self):
         super().setUp()
@@ -1046,7 +1063,9 @@ class StandingWaterUpdateTestCase(
                 localType='lake',
                 levelOfDetail=100000,
                 elevation=784.2,
-                meanDepth=18.8
+                meanDepth=18.8,
+                surfaceArea=5432.1,
+                outlet=1901
                 WHERE remarks='Hello world'
                 """.format(
                     self.view_name

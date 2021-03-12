@@ -140,6 +140,9 @@ class SurfaceWater(Gentity, GGRS87Mixin, ImportedIdMixin):
         RiverBasin, on_delete=models.CASCADE, null=True, blank=True
     )
     level_of_detail = models.IntegerField(blank=True, null=True)
+    outlet = models.ForeignKey(
+        HydroNode, on_delete=models.CASCADE, null=True, blank=True
+    )
 
 
 class Watercourse(SurfaceWater, HydroOrderCodeMixin):
@@ -148,9 +151,6 @@ class Watercourse(SurfaceWater, HydroOrderCodeMixin):
     level = models.FloatField(blank=True, null=True)
     width = models.FloatField(blank=True, null=True)
     slope = models.FloatField(blank=True, null=True)
-    outlet = models.ForeignKey(
-        HydroNode, on_delete=models.CASCADE, null=True, blank=True
-    )
 
 
 class WatercourseLink(Gentity, GGRS87Mixin, ImportedIdMixin):
@@ -186,3 +186,4 @@ class WatercourseLink(Gentity, GGRS87Mixin, ImportedIdMixin):
 class StandingWater(SurfaceWater):
     elevation = models.FloatField(blank=True, null=True)
     mean_depth = models.FloatField(blank=True, null=True)
+    surface_area = models.FloatField(blank=True, null=True)

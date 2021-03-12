@@ -197,33 +197,42 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION insert_into_surfacewater(gentity_id INTEGER, NEW ANYELEMENT)
 RETURNS void
 AS $$
-DECLARE new_river_basin_id INTEGER;
+DECLARE
+    new_river_basin_id INTEGER;
+    new_outlet_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO new_river_basin_id FROM enhydris_openhigis_basin
         WHERE imported_id=NEW.drainsBasin;
+    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.outlet;
     INSERT INTO enhydris_openhigis_surfacewater
         (gentity_ptr_id, geom2100, local_type, man_made, river_basin_id, imported_id,
-        level_of_detail)
+        level_of_detail, outlet_id)
     VALUES
         (gentity_id, NEW.geometry, COALESCE(NEW.localType, ''), NEW.origin = 'manMade',
-         new_river_basin_id, NEW.id, NEW.levelOfDetail);
+         new_river_basin_id, NEW.id, NEW.levelOfDetail, new_outlet_id);
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_surfacewater(gentity_id INTEGER, OLD ANYELEMENT, NEW ANYELEMENT)
 RETURNS void
 AS $$
-DECLARE new_river_basin_id INTEGER;
+DECLARE
+    new_river_basin_id INTEGER;
+    new_outlet_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO new_river_basin_id FROM enhydris_openhigis_basin
         WHERE imported_id=NEW.drainsBasin;
+    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
+        WHERE imported_id=NEW.outlet;
     UPDATE enhydris_openhigis_surfacewater
         SET
             geom2100=NEW.geometry,
             local_type=COALESCE(NEW.localType, ''),
             man_made=(NEW.origin = 'manMade'),
             river_basin_id=new_river_basin_id,
-            level_of_detail=NEW.levelOfDetail
+            level_of_detail=NEW.levelOfDetail,
+            outlet_id=new_outlet_id
         WHERE gentity_ptr_id=gentity_id;
 END;
 $$ LANGUAGE plpgsql;
@@ -676,28 +685,24 @@ CREATE VIEW Watercourse
         LEFT JOIN enhydris_openhigis_basin riverbasin_basin
             ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id
         LEFT JOIN enhydris_openhigis_hydronode outlet
-            ON watercourse.outlet_id = outlet.imported_id;
+            ON surfacewater.outlet_id = outlet.imported_id;
 
 
 CREATE OR REPLACE FUNCTION insert_into_Watercourse() RETURNS TRIGGER
 AS $$
 DECLARE
     gentity_id INTEGER;
-    new_outlet_id INTEGER;
 BEGIN
     gentity_id = openhigis.insert_into_gentity(NEW);
     PERFORM openhigis.insert_into_surfacewater(gentity_id, NEW);
-    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
-        WHERE imported_id=NEW.outlet;
     INSERT INTO enhydris_openhigis_watercourse
         (surfacewater_ptr_id, hydro_order, hydro_order_scheme, hydro_order_scope,
-            width, level, length, slope, delineation_known, outlet_id)
+            width, level, length, slope, delineation_known)
         VALUES (gentity_id,
             COALESCE(NEW.streamOrder, ''),
             COALESCE(NEW.streamOrderScheme, ''),
             COALESCE(NEW.streamOrderScope, ''),
-            NEW.width, NEW.level, NEW.length, NEW.slope, NEW.delineationKnown,
-            new_outlet_id);
+            NEW.width, NEW.level, NEW.length, NEW.slope, NEW.delineationKnown);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -710,14 +715,11 @@ CREATE OR REPLACE FUNCTION update_Watercourse() RETURNS TRIGGER
 AS $$
 DECLARE
     gentity_id INTEGER;
-    new_outlet_id INTEGER;
 BEGIN
     SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_surfacewater
         WHERE imported_id=OLD.id;
     PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     PERFORM openhigis.update_surfacewater(gentity_id, OLD, NEW);
-    SELECT gpoint_ptr_id INTO new_outlet_id FROM enhydris_openhigis_hydronode
-        WHERE imported_id=NEW.outlet;
     UPDATE enhydris_openhigis_watercourse
     SET
         hydro_order=COALESCE(NEW.streamOrder, ''),
@@ -727,8 +729,7 @@ BEGIN
         length=NEW.length,
         level=NEW.level,
         slope=NEW.slope,
-        delineation_known=NEW.delineationKnown,
-        outlet_id=new_outlet_id
+        delineation_known=NEW.delineationKnown
         WHERE surfacewater_ptr_id=gentity_id;
     RETURN NEW;
 END;
@@ -877,12 +878,12 @@ CREATE VIEW StandingWater
              WHEN surfacewater.man_made THEN 'manMade'
              ELSE 'natural'
              END AS origin,
-        ST_LENGTH(surfacewater.geom2100) / 1000 AS length,
         surfacewater.local_type AS localType,
         surfacewater.level_of_detail AS levelOfDetail,
         standingwater.elevation AS elevation,
         standingwater.mean_depth AS meanDepth,
-        ST_Area(surfacewater.geom2100) / 1000000 AS area
+        standingwater.surface_area AS surfaceArea,
+        outlet.imported_id AS outlet
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_openhigis_surfacewater surfacewater
@@ -892,7 +893,9 @@ CREATE VIEW StandingWater
         LEFT JOIN enhydris_openhigis_riverbasin riverbasin
             ON surfacewater.river_basin_id = riverbasin.basin_ptr_id
         LEFT JOIN enhydris_openhigis_basin riverbasin_basin
-            ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id;
+            ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id
+        LEFT JOIN enhydris_openhigis_hydronode outlet
+            ON surfacewater.outlet_id = outlet.imported_id;
 
 CREATE OR REPLACE FUNCTION insert_into_StandingWater() RETURNS TRIGGER
 AS $$
@@ -901,8 +904,8 @@ BEGIN
     gentity_id = openhigis.insert_into_gentity(NEW);
     PERFORM openhigis.insert_into_surfacewater(gentity_id, NEW);
     INSERT INTO enhydris_openhigis_standingwater
-        (surfacewater_ptr_id, elevation, mean_depth)
-        VALUES (gentity_id, NEW.elevation, NEW.meanDepth);
+        (surfacewater_ptr_id, elevation, mean_depth, surface_area)
+        VALUES (gentity_id, NEW.elevation, NEW.meanDepth, NEW.surfaceArea);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -922,7 +925,8 @@ BEGIN
     UPDATE enhydris_openhigis_standingwater
     SET
         elevation=NEW.elevation,
-        mean_depth=NEW.meanDepth
+        mean_depth=NEW.meanDepth,
+        surface_area=NEW.surfaceArea
         WHERE surfacewater_ptr_id=gentity_id;
     RETURN NEW;
 END;
