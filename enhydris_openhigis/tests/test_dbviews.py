@@ -1300,3 +1300,34 @@ class WatercourseLinkSridTestCase(
     model = models.WatercourseLink
     view_name = "WatercourseLink"
     condition = "remarks = 'hello world'"
+
+
+class WatercourseLinkNullFlowDirectionTestCase(TestCase):
+    def test_insert(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.WatercourseLink
+                (id, geographicalName, hydroId, remarks, geometry, length,
+                flowDirection, startNode, endNode, fictitious)
+                VALUES (1852, 'Segment 18', 'S18', 'hello world',
+                'SRID=2100;POINT(500000 4000000)', 3.14159, NULL, NULL, 1901,
+                False)
+                """
+            )
+        self.assertEqual(models.WatercourseLink.objects.first().flow_direction, "")
+
+    def test_update(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.WatercourseLink
+                (id, geographicalName, hydroId, remarks, geometry, length,
+                flowDirection, startNode, endNode, fictitious)
+                VALUES (1852, 'Segment 18', 'S18', 'hello world',
+                'SRID=2100;POINT(500000 4000000)', 3.14159, 'inDirection', NULL, 1901,
+                False)
+                """
+            )
+            cursor.execute("UPDATE openhigis.WatercourseLink SET flowDirection=NULL")
+        self.assertEqual(models.WatercourseLink.objects.first().flow_direction, "")

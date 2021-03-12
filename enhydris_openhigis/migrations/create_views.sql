@@ -800,8 +800,9 @@ BEGIN
         (gentity_ptr_id, geom2100, imported_id, length, flow_direction,
          start_node_id, end_node_id, fictitious)
     VALUES
-        (gentity_id, NEW.geometry, NEW.id, NEW.length, NEW.flowDirection,
-        new_start_node_id, new_end_node_id, NEW.fictitious);
+        (gentity_id, NEW.geometry, NEW.id, NEW.length,
+        COALESCE(NEW.flowDirection, ''), new_start_node_id, new_end_node_id,
+        NEW.fictitious);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -828,7 +829,7 @@ BEGIN
     SET
         length=NEW.length,
         geom2100=NEW.geometry,
-        flow_direction=NEW.flowDirection,
+        flow_direction=COALESCE(NEW.flowDirection, ''),
         start_node_id=new_start_node_id,
         end_node_id=new_end_node_id,
         fictitious=NEW.fictitious
