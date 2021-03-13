@@ -77,10 +77,11 @@ class HydroNodeSetupInitialRowMixin:
             cursor.execute(
                 """
                 INSERT INTO openhigis.HydroNode
-                (geographicalName, hydroId, remarks, geometry, id, elevation)
+                (geographicalName, hydroId, remarks, geometry, id, elevation,
+                 hydroNodeCategory)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1901,
-                 782.5)
+                 782.5, 'boundary')
                 """
             )
 
@@ -705,6 +706,12 @@ class HydroNodeAdditionalTestsMixin:
             self.model.objects.first().altitude, self.expected_altitude
         )
 
+    def test_hydro_node_category(self):
+        self.assertEqual(
+            self.model.objects.first().hydro_node_category,
+            self.expected_hydro_node_category,
+        )
+
 
 class HydroNodeInsertTestCase(
     EssentialTestsMixin,
@@ -721,6 +728,7 @@ class HydroNodeInsertTestCase(
     expected_x = 24.00166
     expected_y = 36.14732
     expected_altitude = 782.5
+    expected_hydro_node_category = "boundary"
 
 
 class HydroNodeUpdateTestCase(
@@ -738,6 +746,7 @@ class HydroNodeUpdateTestCase(
     expected_x = 24.59318
     expected_y = 40.65191
     expected_altitude = 783.6
+    expected_hydro_node_category = "flowConstriction"
 
     def setUp(self):
         super().setUp()
@@ -745,8 +754,13 @@ class HydroNodeUpdateTestCase(
             cursor.execute(
                 """
                 UPDATE openhigis.HydroNode
-                SET geographicalName='Epirus', hydroId='08', remarks='Hello planet',
-                geometry='SRID=2100;POINT(550000 4500000)', elevation=783.6
+                SET
+                    geographicalName='Epirus',
+                    hydroId='08',
+                    remarks='Hello planet',
+                    geometry='SRID=2100;POINT(550000 4500000)',
+                    elevation=783.6,
+                    hydroNodeCategory='flowConstriction'
                 WHERE geographicalName='Attica'
                 """
             )
@@ -761,6 +775,31 @@ class HydroNodeSridTestCase(SridMixin, HydroNodeSetupInitialRowMixin, TestCase):
     model = models.HydroNode
     view_name = "HydroNode"
     condition = "remarks = 'Hello world'"
+
+
+class NullHydroNodeCategoryTestCase(TestCase):
+    def _create_row(self, hydro_node_category_sql_expression="NULL"):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                INSERT INTO openhigis.HydroNode
+                (geographicalName, hydroId, remarks, geometry, id, elevation,
+                 hydroNodeCategory)
+                VALUES
+                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1901,
+                 782.5, {hydro_node_category_sql_expression})
+                """
+            )
+
+    def test_can_insert_null(self):
+        self._create_row()
+        self.assertEqual(models.HydroNode.objects.first().hydro_node_category, "")
+
+    def test_can_update_with_null(self):
+        self._create_row("'boundary'")
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE openhigis.HydroNode SET hydroNodeCategory=NULL")
+        self.assertEqual(models.HydroNode.objects.first().hydro_node_category, "")
 
 
 class WatercourseSetupInitialRowMixin(

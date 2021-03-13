@@ -72,7 +72,23 @@ class RiverBasinDistrict(Garea, GGRS87Mixin, ImportedIdMixin):
 
 
 class HydroNode(Gpoint, GGRS87Mixin, ImportedIdMixin):
-    pass
+    BOUNDARY = "boundary"
+    FLOW_CONSTRICTION = "flowConstriction"
+    FLOW_REGULATION = "flowRegulation"
+    JUNCTION = "junction"
+    OUTLET = "outlet"
+    SOURCE = "source"
+    HYDRO_NODE_CATEGORIES = (
+        (BOUNDARY, "boundary"),
+        (FLOW_CONSTRICTION, "flowConstriction"),
+        (FLOW_REGULATION, "flowRegulation"),
+        (JUNCTION, "junction"),
+        (OUTLET, "outlet"),
+        (SOURCE, "source"),
+    )
+    hydro_node_category = models.CharField(
+        max_length=16, blank=True, choices=HYDRO_NODE_CATEGORIES
+    )
 
 
 class BasinMixin(HydroOrderCodeMixin):

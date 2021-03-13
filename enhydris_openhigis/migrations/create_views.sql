@@ -966,7 +966,8 @@ CREATE VIEW HydroNode
         g.remarks,
         g.code as hydroId,
         hn.geom2100 AS geometry,
-        gp.altitude AS elevation
+        gp.altitude AS elevation,
+        hn.hydro_node_category AS hydroNodeCategory
     FROM
         enhydris_gentity g
         INNER JOIN enhydris_gpoint gp ON gp.gentity_ptr_id = g.id
@@ -978,8 +979,8 @@ DECLARE gentity_id INTEGER;
 BEGIN
     gentity_id = openhigis.insert_into_gpoint(NEW);
     INSERT INTO enhydris_openhigis_hydronode
-        (gpoint_ptr_id, geom2100, imported_id)
-        VALUES (gentity_id, NEW.geometry, NEW.id);
+        (gpoint_ptr_id, geom2100, imported_id, hydro_node_category)
+        VALUES (gentity_id, NEW.geometry, NEW.id, COALESCE(NEW.hydroNodeCategory, ''));
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -999,7 +1000,9 @@ BEGIN
         SET altitude=NEW.elevation
         WHERE gentity_ptr_id=gentity_id;
     UPDATE enhydris_openhigis_hydronode
-        SET geom2100=NEW.geometry
+        SET
+            geom2100=NEW.geometry,
+            hydro_node_category=COALESCE(NEW.hydroNodeCategory, '')
         WHERE imported_id=OLD.id;
     RETURN NEW;
 END;
