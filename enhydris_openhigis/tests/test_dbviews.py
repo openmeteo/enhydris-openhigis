@@ -77,10 +77,11 @@ class HydroNodeSetupInitialRowMixin:
             cursor.execute(
                 """
                 INSERT INTO openhigis.HydroNode
-                (geographicalName, hydroId, remarks, geometry, id, elevation)
+                (geographicalName, hydroId, remarks, geometry, id, elevation,
+                 hydroNodeCategory)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1901,
-                 782.5)
+                 782.5, 'boundary')
                 """
             )
 
@@ -705,6 +706,12 @@ class HydroNodeAdditionalTestsMixin:
             self.model.objects.first().altitude, self.expected_altitude
         )
 
+    def test_hydro_node_category(self):
+        self.assertEqual(
+            self.model.objects.first().hydro_node_category,
+            self.expected_hydro_node_category,
+        )
+
 
 class HydroNodeInsertTestCase(
     EssentialTestsMixin,
@@ -721,6 +728,7 @@ class HydroNodeInsertTestCase(
     expected_x = 24.00166
     expected_y = 36.14732
     expected_altitude = 782.5
+    expected_hydro_node_category = "boundary"
 
 
 class HydroNodeUpdateTestCase(
@@ -738,6 +746,7 @@ class HydroNodeUpdateTestCase(
     expected_x = 24.59318
     expected_y = 40.65191
     expected_altitude = 783.6
+    expected_hydro_node_category = "flowConstriction"
 
     def setUp(self):
         super().setUp()
@@ -745,8 +754,13 @@ class HydroNodeUpdateTestCase(
             cursor.execute(
                 """
                 UPDATE openhigis.HydroNode
-                SET geographicalName='Epirus', hydroId='08', remarks='Hello planet',
-                geometry='SRID=2100;POINT(550000 4500000)', elevation=783.6
+                SET
+                    geographicalName='Epirus',
+                    hydroId='08',
+                    remarks='Hello planet',
+                    geometry='SRID=2100;POINT(550000 4500000)',
+                    elevation=783.6,
+                    hydroNodeCategory='flowConstriction'
                 WHERE geographicalName='Attica'
                 """
             )
@@ -761,6 +775,31 @@ class HydroNodeSridTestCase(SridMixin, HydroNodeSetupInitialRowMixin, TestCase):
     model = models.HydroNode
     view_name = "HydroNode"
     condition = "remarks = 'Hello world'"
+
+
+class NullHydroNodeCategoryTestCase(TestCase):
+    def _create_row(self, hydro_node_category_sql_expression="NULL"):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                INSERT INTO openhigis.HydroNode
+                (geographicalName, hydroId, remarks, geometry, id, elevation,
+                 hydroNodeCategory)
+                VALUES
+                ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)', 1901,
+                 782.5, {hydro_node_category_sql_expression})
+                """
+            )
+
+    def test_can_insert_null(self):
+        self._create_row()
+        self.assertEqual(models.HydroNode.objects.first().hydro_node_category, "")
+
+    def test_can_update_with_null(self):
+        self._create_row("'boundary'")
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE openhigis.HydroNode SET hydroNodeCategory=NULL")
+        self.assertEqual(models.HydroNode.objects.first().hydro_node_category, "")
 
 
 class WatercourseSetupInitialRowMixin(
@@ -802,6 +841,9 @@ class SurfaceWaterTestsMixin:
             self.model.objects.first().level_of_detail, self.expected_level_of_detail
         )
 
+    def test_outlet(self):
+        self.assertEqual(self.model.objects.first().outlet_id, self.expected_outlet_id)
+
 
 class WatercourseTestsMixin:
     def test_width(self):
@@ -818,9 +860,6 @@ class WatercourseTestsMixin:
 
     def test_level(self):
         self.assertAlmostEqual(self.model.objects.first().level, self.expected_level)
-
-    def test_outlet(self):
-        self.assertEqual(self.model.objects.first().outlet_id, self.expected_outlet_id)
 
     def test_slope(self):
         self.assertEqual(self.model.objects.first().slope, self.expected_slope)
@@ -959,7 +998,9 @@ class NullLocalTypeTestCase(TestCase):
         self.assertEqual(models.Watercourse.objects.first().local_type, "")
 
 
-class StandingWaterSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
+class StandingWaterSetupInitialRowMixin(
+    RiverBasinSetupInitialRowMixin, HydroNodeSetupInitialRowMixin
+):
     def setUp(self):
         super().setUp()
         with connection.cursor() as cursor:
@@ -967,10 +1008,10 @@ class StandingWaterSetupInitialRowMixin(RiverBasinSetupInitialRowMixin):
                 """
                 INSERT INTO openhigis.StandingWater
                 (geographicalName, hydroId, remarks, geometry, origin, id, localType,
-                drainsBasin, elevation, meanDepth, levelOfDetail)
+                drainsBasin, elevation, meanDepth, levelOfDetail, surfaceArea, outlet)
                 VALUES
                 ('Attica', '06', 'Hello world', 'SRID=2100;POINT(500000 4000000)',
-                'manMade', 1852, 'pool', 1851, 784.1, 18.7, 50000)
+                'manMade', 1852, 'pool', 1851, 784.1, 18.7, 50000, 4285.3, 1901)
                 """
             )
         self.expected_surface_water_id = models.StandingWater.objects.first().id
@@ -985,6 +1026,11 @@ class StandingWaterTestsMixin:
     def test_mean_depth(self):
         self.assertAlmostEqual(
             self.model.objects.first().mean_depth, self.expected_mean_depth
+        )
+
+    def test_surface_area(self):
+        self.assertAlmostEqual(
+            self.model.objects.first().surface_area, self.expected_surface_area
         )
 
 
@@ -1008,6 +1054,11 @@ class StandingWaterInsertTestCase(
     expected_level_of_detail = 50000
     expected_elevation = 784.1
     expected_mean_depth = 18.7
+    expected_surface_area = 4285.3
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
 
 class StandingWaterUpdateTestCase(
@@ -1030,6 +1081,11 @@ class StandingWaterUpdateTestCase(
     expected_level_of_detail = 100000
     expected_elevation = 784.2
     expected_mean_depth = 18.8
+    expected_surface_area = 5432.1
+
+    @property
+    def expected_outlet_id(self):
+        return models.HydroNode.objects.get(imported_id=1901).id
 
     def setUp(self):
         super().setUp()
@@ -1046,7 +1102,9 @@ class StandingWaterUpdateTestCase(
                 localType='lake',
                 levelOfDetail=100000,
                 elevation=784.2,
-                meanDepth=18.8
+                meanDepth=18.8,
+                surfaceArea=5432.1,
+                outlet=1901
                 WHERE remarks='Hello world'
                 """.format(
                     self.view_name
@@ -1300,3 +1358,34 @@ class WatercourseLinkSridTestCase(
     model = models.WatercourseLink
     view_name = "WatercourseLink"
     condition = "remarks = 'hello world'"
+
+
+class WatercourseLinkNullFlowDirectionTestCase(TestCase):
+    def test_insert(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.WatercourseLink
+                (id, geographicalName, hydroId, remarks, geometry, length,
+                flowDirection, startNode, endNode, fictitious)
+                VALUES (1852, 'Segment 18', 'S18', 'hello world',
+                'SRID=2100;POINT(500000 4000000)', 3.14159, NULL, NULL, 1901,
+                False)
+                """
+            )
+        self.assertEqual(models.WatercourseLink.objects.first().flow_direction, "")
+
+    def test_update(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.WatercourseLink
+                (id, geographicalName, hydroId, remarks, geometry, length,
+                flowDirection, startNode, endNode, fictitious)
+                VALUES (1852, 'Segment 18', 'S18', 'hello world',
+                'SRID=2100;POINT(500000 4000000)', 3.14159, 'inDirection', NULL, 1901,
+                False)
+                """
+            )
+            cursor.execute("UPDATE openhigis.WatercourseLink SET flowDirection=NULL")
+        self.assertEqual(models.WatercourseLink.objects.first().flow_direction, "")

@@ -230,6 +230,24 @@ MAP
     END
 
     LAYER
+        NAME "HydroNodes"
+        TYPE POINT
+        CONNECTIONTYPE POSTGIS
+        CONNECTION "host=localhost dbname=openmeteo user=mapserver"
+        METADATA
+            "wms_title" "HydroNodes"
+            "wfs_title" "HydroNodes"
+            "gml_include_items" "all"
+            "gml_featureid" "id"
+        END
+        STATUS ON
+        DATA "geometry FROM openhigis.HydroNode USING UNIQUE id USING SRID=2100"
+        PROJECTION
+            "init=epsg:2100"
+        END
+    END
+
+    LAYER
         NAME "StandingWaters"
         TYPE POLYGON
         CONNECTIONTYPE POSTGIS

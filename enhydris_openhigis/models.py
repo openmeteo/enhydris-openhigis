@@ -72,7 +72,23 @@ class RiverBasinDistrict(Garea, GGRS87Mixin, ImportedIdMixin):
 
 
 class HydroNode(Gpoint, GGRS87Mixin, ImportedIdMixin):
-    pass
+    BOUNDARY = "boundary"
+    FLOW_CONSTRICTION = "flowConstriction"
+    FLOW_REGULATION = "flowRegulation"
+    JUNCTION = "junction"
+    OUTLET = "outlet"
+    SOURCE = "source"
+    HYDRO_NODE_CATEGORIES = (
+        (BOUNDARY, "boundary"),
+        (FLOW_CONSTRICTION, "flowConstriction"),
+        (FLOW_REGULATION, "flowRegulation"),
+        (JUNCTION, "junction"),
+        (OUTLET, "outlet"),
+        (SOURCE, "source"),
+    )
+    hydro_node_category = models.CharField(
+        max_length=16, blank=True, choices=HYDRO_NODE_CATEGORIES
+    )
 
 
 class BasinMixin(HydroOrderCodeMixin):
@@ -140,6 +156,9 @@ class SurfaceWater(Gentity, GGRS87Mixin, ImportedIdMixin):
         RiverBasin, on_delete=models.CASCADE, null=True, blank=True
     )
     level_of_detail = models.IntegerField(blank=True, null=True)
+    outlet = models.ForeignKey(
+        HydroNode, on_delete=models.CASCADE, null=True, blank=True
+    )
 
 
 class Watercourse(SurfaceWater, HydroOrderCodeMixin):
@@ -148,9 +167,6 @@ class Watercourse(SurfaceWater, HydroOrderCodeMixin):
     level = models.FloatField(blank=True, null=True)
     width = models.FloatField(blank=True, null=True)
     slope = models.FloatField(blank=True, null=True)
-    outlet = models.ForeignKey(
-        HydroNode, on_delete=models.CASCADE, null=True, blank=True
-    )
 
 
 class WatercourseLink(Gentity, GGRS87Mixin, ImportedIdMixin):
@@ -186,3 +202,4 @@ class WatercourseLink(Gentity, GGRS87Mixin, ImportedIdMixin):
 class StandingWater(SurfaceWater):
     elevation = models.FloatField(blank=True, null=True)
     mean_depth = models.FloatField(blank=True, null=True)
+    surface_area = models.FloatField(blank=True, null=True)
