@@ -263,7 +263,7 @@ MAP
         PROJECTION
             "init=epsg:2100"
         END
-        TEMPLATE "wmspopup-general.html"
+        TEMPLATE "wmspopup-standing-water.html"
         CLASS
             NAME "Standing waters"
             STYLE

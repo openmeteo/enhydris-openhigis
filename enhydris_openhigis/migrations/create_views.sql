@@ -780,9 +780,9 @@ CREATE VIEW WatercourseLink
         INNER JOIN enhydris_openhigis_watercourselink wl
             ON wl.gentity_ptr_id = g.id
         LEFT JOIN enhydris_openhigis_hydronode start_node
-            ON wl.start_node_id = start_node.imported_id
+            ON wl.start_node_id = start_node.gpoint_ptr_id
         LEFT JOIN enhydris_openhigis_hydronode end_node
-            ON wl.end_node_id = end_node.imported_id;
+            ON wl.end_node_id = end_node.gpoint_ptr_id;
 
 
 CREATE OR REPLACE FUNCTION insert_into_WatercourseLink() RETURNS TRIGGER
