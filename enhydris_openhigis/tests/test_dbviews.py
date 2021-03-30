@@ -516,6 +516,103 @@ class InsertEntityWithNullGeographicalNameTestCase(TestCase):
         self.assertEqual(models.RiverBasinDistrict.objects.first().name, "")
 
 
+class ManMadeMixin:
+    def _insert_record(self, man_made_value):
+        if self.table == "StationBasin":
+            self._insert_into_station_basin(man_made_value)
+        else:
+            self._insert_general(man_made_value)
+
+    def _insert_general(self, man_made_value):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                INSERT INTO openhigis.{self.table} (id, geometry, origin)
+                VALUES (42, 'SRID=2100;POINT(500000 4000000)', '{man_made_value}')
+                """
+            )
+
+    def _update_record(self, man_made_value):
+        self._insert_record("")
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"UPDATE openhigis.{self.table} SET origin='{man_made_value}'"
+            )
+
+    def _insert_into_station_basin(self, man_made_value):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.RiverBasin (id, geometry)
+                VALUES (99, 'SRID=2100;POINT(500000 4000000)')
+                """
+            )
+            mommy.make(models.Station, id=42)
+            cursor.execute(
+                f"""
+                INSERT INTO openhigis.StationBasin (id, geometry, riverBasin, origin)
+                VALUES (42, 'SRID=2100;POINT(500000 4000000)', 99, '{man_made_value}')
+                """
+            )
+
+    def _check_man_made(self, expected_value):
+        if expected_value is True:
+            self.assertTrue(self.model.objects.first().man_made)
+        elif expected_value is False:
+            self.assertFalse(self.model.objects.first().man_made)
+        elif expected_value is None:
+            self.assertIsNone(self.model.objects.first().man_made)
+        else:
+            self.assertTrue(False, "We shouldn't have reached here")
+
+    def test_insert_camel_case(self):
+        self._insert_record("manMade")
+        self._check_man_made(True)
+
+    def test_update_camel_case(self):
+        self._update_record("manMade")
+        self._check_man_made(True)
+
+    def test_insert_all_caps(self):
+        self._insert_record("MANMADE")
+        self._check_man_made(True)
+
+    def test_update_all_caps(self):
+        self._update_record("MANMADE")
+        self._check_man_made(True)
+
+    def test_insert_natural(self):
+        self._insert_record("natural")
+        self._check_man_made(False)
+
+    def test_update_natural(self):
+        self._update_record("natural")
+        self._check_man_made(False)
+
+    def test_insert_empty(self):
+        self._insert_record("")
+        self._check_man_made(None)
+
+    def test_update_empty(self):
+        self._update_record("")
+        self._check_man_made(None)
+
+
+class ManMadeRiverBasinTestCase(ManMadeMixin, TestCase):
+    table = "RiverBasin"
+    model = models.RiverBasin
+
+
+class ManMadeWatercourseTestCase(ManMadeMixin, TestCase):
+    table = "Watercourse"
+    model = models.SurfaceWater
+
+
+class ManMadeStationBasinTestCase(ManMadeMixin, TestCase):
+    table = "StationBasin"
+    model = models.StationBasin
+
+
 class StationBasinSetupInitialRowMixin(
     RiverBasinSetupInitialRowMixin, HydroNodeSetupInitialRowMixin
 ):
@@ -1298,6 +1395,18 @@ class WatercourseLinkInsertTestCase(
     @property
     def expected_end_node_id(self):
         return models.HydroNode.objects.get(imported_id=1901).id
+
+
+class WatercourseLinkInsertWithEmptyFictitiousTestCase(TestCase):
+    def test_fictitious_is_null_by_default(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.WatercourseLink (id, geographicalName, geometry)
+                VALUES (1852, 'Segment 18', 'SRID=2100;POINT(500000 4000000)')
+                """
+            )
+        self.assertFalse(models.WatercourseLink.objects.first().fictitious)
 
 
 class WatercourseLinkUpdateTestCase(
