@@ -155,7 +155,10 @@ BEGIN
             mean_cn, concentration_time, outlet_id, watercourse_main_length,
             watercourse_main_slope, outlet_elevation
         )
-    VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
+    VALUES (gentity_id, NEW.geometry,
+        CASE WHEN lower(NEW.origin) = 'manmade' THEN true
+             WHEN lower(NEW.origin) = 'natural' THEN false
+        END,
         NEW.meanSlope, NEW.meanElevation, NEW.id,
         COALESCE(NEW.basinOrder, ''), COALESCE(NEW.basinOrderScheme, ''),
         COALESCE(NEW.basinOrderScope, ''),
@@ -177,7 +180,9 @@ BEGIN
     UPDATE enhydris_openhigis_basin
         SET
             geom2100=NEW.geometry,
-            man_made=(NEW.origin = 'manMade'),
+            man_made=CASE WHEN lower(NEW.origin) = 'manmade' THEN true
+                          WHEN lower(NEW.origin) = 'natural' THEN false
+                     END,
             mean_slope=NEW.meanSlope,
             mean_elevation=NEW.meanElevation,
             hydro_order=COALESCE(NEW.basinOrder, ''),
@@ -209,8 +214,11 @@ BEGIN
         (gentity_ptr_id, geom2100, local_type, man_made, river_basin_id, imported_id,
         level_of_detail, outlet_id)
     VALUES
-        (gentity_id, NEW.geometry, COALESCE(NEW.localType, ''), NEW.origin = 'manMade',
-         new_river_basin_id, NEW.id, NEW.levelOfDetail, new_outlet_id);
+        (gentity_id, NEW.geometry, COALESCE(NEW.localType, ''),
+        CASE WHEN lower(NEW.origin) = 'manmade' THEN true
+             WHEN lower(NEW.origin) = 'natural' THEN false
+        END,
+        new_river_basin_id, NEW.id, NEW.levelOfDetail, new_outlet_id);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -229,7 +237,9 @@ BEGIN
         SET
             geom2100=NEW.geometry,
             local_type=COALESCE(NEW.localType, ''),
-            man_made=(NEW.origin = 'manMade'),
+            man_made=CASE WHEN lower(NEW.origin) = 'manmade' THEN true
+                          WHEN lower(NEW.origin) = 'natural' THEN false
+                     END,
             river_basin_id=new_river_basin_id,
             level_of_detail=NEW.levelOfDetail,
             outlet_id=new_outlet_id
@@ -570,7 +580,10 @@ BEGIN
             concentration_time, outlet_id, watercourse_main_length,
             watercourse_main_slope, outlet_elevation
         )
-        VALUES (gentity_id, NEW.geometry, NEW.origin = 'manMade',
+        VALUES (gentity_id, NEW.geometry,
+            CASE WHEN lower(NEW.origin) = 'manmade' THEN true
+                 WHEN lower(NEW.origin) = 'natural' THEN false
+            END,
             NEW.meanSlope, NEW.meanElevation,
             new_river_basin_id, NEW.id, COALESCE(NEW.basinOrder, ''),
             COALESCE(NEW.basinOrderScheme, ''), COALESCE(NEW.basinOrderScope, ''),
@@ -604,7 +617,9 @@ BEGIN
     UPDATE enhydris_openhigis_stationbasin
     SET
         geom2100=NEW.geometry,
-        man_made=(NEW.origin = 'manMade'),
+        man_made=CASE WHEN lower(NEW.origin) = 'manmade' THEN true
+                      WHEN lower(NEW.origin) = 'natural' THEN false
+                 END,
         mean_slope=NEW.meanSlope,
         mean_elevation=NEW.meanElevation,
         river_basin_id=new_river_basin_id,
