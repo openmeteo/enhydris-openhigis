@@ -1300,6 +1300,18 @@ class WatercourseLinkInsertTestCase(
         return models.HydroNode.objects.get(imported_id=1901).id
 
 
+class WatercourseLinkInsertWithEmptyFictitiousTestCase(TestCase):
+    def test_fictitious_is_null_by_default(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.WatercourseLink (id, geographicalName, geometry)
+                VALUES (1852, 'Segment 18', 'SRID=2100;POINT(500000 4000000)')
+                """
+            )
+        self.assertFalse(models.WatercourseLink.objects.first().fictitious)
+
+
 class WatercourseLinkUpdateTestCase(
     EssentialTestsMixin,
     WatercourseLinkSetupInitialRowMixin,

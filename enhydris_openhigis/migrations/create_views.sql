@@ -803,7 +803,7 @@ BEGIN
     VALUES
         (gentity_id, NEW.geometry, NEW.id, NEW.length,
         COALESCE(NEW.flowDirection, ''), new_start_node_id, new_end_node_id,
-        NEW.fictitious);
+        COALESCE(NEW.fictitious, false));
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
