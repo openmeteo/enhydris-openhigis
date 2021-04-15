@@ -59,6 +59,13 @@ Installing and configuring
   ``MIDDLEWARE``, and specify the mapserver root url in
   ``ENHYDRIS_OWS_URL``.
 
+  ``ENHYDRIS_OWS_URL`` can be empty. In that case, the openhigis UI
+  elements (search geodata, extra layers) aren't shown. This is useful
+  if we want the database tables/views to be installed but for the UI to
+  be unaffected, such as when we serve many Enhydris instances from the
+  same database and do not want all the instances to have the openhigis
+  UI elements.
+
 - In the Enhydris configuration directory, execute ``python manage.py
   migrate``.
 

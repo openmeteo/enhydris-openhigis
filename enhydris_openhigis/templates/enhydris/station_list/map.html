@@ -2,9 +2,11 @@
 
 <div class="map map-fullpage {% if request.GET.q or request.GET.bbox %}with-search-result{% endif %}">
   <div id="mapid"></div>
-  <div class="form-geosearch-wrapper">
-    <form class="form-geosearch" action='#' method="get">
-      <input id="geosearch_input" type="text" name="qgeo" class="form-control" placeholder="{% trans 'Search geodata' %}">
-    </form>
-  </div>
+  {% if request.openhigis.ows_url %}
+    <div class="form-geosearch-wrapper">
+        <form class="form-geosearch" action='#' method="get">
+        <input id="geosearch_input" type="text" name="qgeo" class="form-control" placeholder="{% trans 'Search geodata' %}">
+        </form>
+    </div>
+  {% endif %}
 </div>
