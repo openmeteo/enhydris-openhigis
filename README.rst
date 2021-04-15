@@ -10,6 +10,9 @@ Enhydris-openhigis - OpenHi layers
     :alt: Coverage
     :target: https://codecov.io/gh/openmeteo/enhydris-openhigis
 
+Overview
+========
+
 Enhydris-openhigis is an app that provides layers (such as water basins
 and river networks) for the OpenHi project. In the repository there's
 also MapServer configuration for serving these layers with WMS and WFS.
@@ -27,12 +30,8 @@ single view, these views also use SRID=2100, transparently translating
 to and from 4326, which is what is actually being used for geometry
 storage in ``Gentity``.
 
-© 2019 National Technical University of Athens
-
-Enhydris-openhigis is free software, available under the GNU Affero
-General Public License.
-
-**Installing and configuring**
+Installing and configuring
+==========================
 
 - Install Enhydris 3 or later
 
@@ -60,9 +59,43 @@ General Public License.
   ``MIDDLEWARE``, and specify the mapserver root url in
   ``ENHYDRIS_OWS_URL``.
 
+  ``ENHYDRIS_OWS_URL`` can be empty. In that case, the openhigis UI
+  elements (search geodata, extra layers) aren't shown. This is useful
+  if we want the database tables/views to be installed but for the UI to
+  be unaffected, such as when we serve many Enhydris instances from the
+  same database and do not want all the instances to have the openhigis
+  UI elements.
+
 - In the Enhydris configuration directory, execute ``python manage.py
   migrate``.
 
 - Connect to PostgreSQL with ArcGIS or QGIS and add layers.
 
 - Start MapServer and access these layers.
+
+Meta
+====
+
+| Copyright (C) 2018-2021 National Technical University of Athens
+| Copyright (C) 2018-2021 Institute of Communication and Computer Systems
+
+Enhydris-openhigis is free software: you can redistribute it and/or
+modify it under the terms of the GNU Affero General Public License, as
+published by the Free Software Foundation; either version 3 of the
+License, or (at your option) any later version.
+
+The software is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+licenses for more details.
+
+You should have received a copy of the license along with this
+program.  If not, see http://www.gnu.org/licenses/.
+
+Enhydris-openhigis was funded by NTUA_ and ICCS_ as part of the OpenHi_
+project.
+
+.. _ntua: http://www.ntua.gr/
+.. _iccs: https://www.iccs.gr
+.. _openhi: https://openhi.net
+
