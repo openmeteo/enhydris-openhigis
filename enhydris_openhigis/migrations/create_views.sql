@@ -179,6 +179,7 @@ BEGIN
         WHERE imported_id=NEW.outlet;
     UPDATE enhydris_openhigis_basin
         SET
+            imported_id=NEW.id,
             geom2100=NEW.geometry,
             man_made=CASE WHEN lower(NEW.origin) = 'manmade' THEN true
                           WHEN lower(NEW.origin) = 'natural' THEN false
@@ -235,6 +236,7 @@ BEGIN
         WHERE imported_id=NEW.outlet;
     UPDATE enhydris_openhigis_surfacewater
         SET
+            imported_id=NEW.id,
             geom2100=NEW.geometry,
             local_type=COALESCE(NEW.localType, ''),
             man_made=CASE WHEN lower(NEW.origin) = 'manmade' THEN true
@@ -289,7 +291,7 @@ BEGIN
         WHERE imported_id=OLD.id;
     PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     UPDATE enhydris_openhigis_riverbasindistrict
-    SET geom2100=NEW.geometry
+    SET imported_id=NEW.id, geom2100=NEW.geometry
     WHERE imported_id=OLD.id;
     RETURN NEW;
 END;

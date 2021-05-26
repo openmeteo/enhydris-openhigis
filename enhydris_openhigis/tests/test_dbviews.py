@@ -99,6 +99,21 @@ class RiverBasinDistrictSetupInitialRowMixin:
             )
 
 
+class ImportedIdTestsMixin:
+    def test_imported_id(self):
+        self.assertEqual(
+            self.model.objects.first().imported_id, self.expected_imported_id
+        )
+
+    def test_change_imported_id(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"UPDATE openhigis.{self.view_name} SET id=2798 "
+                f"WHERE id={self.expected_imported_id}"
+            )
+        self.assertEqual(self.model.objects.first().imported_id, 2798)
+
+
 class RiverBasinDistrictInsertTestCase(
     EssentialTestsMixin, RiverBasinDistrictSetupInitialRowMixin, TestCase
 ):
@@ -113,7 +128,10 @@ class RiverBasinDistrictInsertTestCase(
 
 
 class RiverBasinDistrictUpdateTestCase(
-    EssentialTestsMixin, RiverBasinDistrictSetupInitialRowMixin, TestCase
+    EssentialTestsMixin,
+    ImportedIdTestsMixin,
+    RiverBasinDistrictSetupInitialRowMixin,
+    TestCase,
 ):
     model = models.RiverBasinDistrict
     view_name = "RiverBasinDistrict"
@@ -123,6 +141,7 @@ class RiverBasinDistrictUpdateTestCase(
     expected_remarks = "Hello planet"
     expected_x = 24.59318
     expected_y = 40.65191
+    expected_imported_id = 1852
 
     def setUp(self):
         super().setUp()
@@ -241,13 +260,6 @@ class BasinsAdditionalTestsMixin:
         self.assertAlmostEqual(
             self.model.objects.first().outlet_elevation,
             self.expected_outlet_elevation,
-        )
-
-
-class ImportedIdTestsMixin:
-    def test_imported_id(self):
-        self.assertEqual(
-            self.model.objects.first().imported_id, self.expected_imported_id
         )
 
 
@@ -968,6 +980,7 @@ class WatercourseInsertTestCase(
     WatercourseSetupInitialRowMixin,
     SurfaceWaterTestsMixin,
     WatercourseTestsMixin,
+    ImportedIdTestsMixin,
     TestCase,
 ):
     model = models.Watercourse
@@ -991,6 +1004,7 @@ class WatercourseInsertTestCase(
     expected_level = 776.3
     expected_slope = 0.45
     expected_outlet_id = None
+    expected_imported_id = 1852
 
 
 class WatercourseUpdateTestCase(
@@ -1136,6 +1150,7 @@ class StandingWaterInsertTestCase(
     StandingWaterSetupInitialRowMixin,
     SurfaceWaterTestsMixin,
     StandingWaterTestsMixin,
+    ImportedIdTestsMixin,
     TestCase,
 ):
     model = models.StandingWater
@@ -1152,6 +1167,7 @@ class StandingWaterInsertTestCase(
     expected_elevation = 784.1
     expected_mean_depth = 18.7
     expected_surface_area = 4285.3
+    expected_imported_id = 1852
 
     @property
     def expected_outlet_id(self):
