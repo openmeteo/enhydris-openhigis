@@ -99,6 +99,21 @@ class RiverBasinDistrictSetupInitialRowMixin:
             )
 
 
+class ImportedIdTestsMixin:
+    def test_imported_id(self):
+        self.assertEqual(
+            self.model.objects.first().imported_id, self.expected_imported_id
+        )
+
+    def test_change_imported_id(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"UPDATE openhigis.{self.view_name} SET id=2798 "
+                f"WHERE id={self.expected_imported_id}"
+            )
+        self.assertEqual(self.model.objects.first().imported_id, 2798)
+
+
 class RiverBasinDistrictInsertTestCase(
     EssentialTestsMixin, RiverBasinDistrictSetupInitialRowMixin, TestCase
 ):
@@ -113,7 +128,10 @@ class RiverBasinDistrictInsertTestCase(
 
 
 class RiverBasinDistrictUpdateTestCase(
-    EssentialTestsMixin, RiverBasinDistrictSetupInitialRowMixin, TestCase
+    EssentialTestsMixin,
+    ImportedIdTestsMixin,
+    RiverBasinDistrictSetupInitialRowMixin,
+    TestCase,
 ):
     model = models.RiverBasinDistrict
     view_name = "RiverBasinDistrict"
@@ -123,6 +141,7 @@ class RiverBasinDistrictUpdateTestCase(
     expected_remarks = "Hello planet"
     expected_x = 24.59318
     expected_y = 40.65191
+    expected_imported_id = 1852
 
     def setUp(self):
         super().setUp()
@@ -241,13 +260,6 @@ class BasinsAdditionalTestsMixin:
         self.assertAlmostEqual(
             self.model.objects.first().outlet_elevation,
             self.expected_outlet_elevation,
-        )
-
-
-class ImportedIdTestsMixin:
-    def test_imported_id(self):
-        self.assertEqual(
-            self.model.objects.first().imported_id, self.expected_imported_id
         )
 
 
@@ -968,6 +980,7 @@ class WatercourseInsertTestCase(
     WatercourseSetupInitialRowMixin,
     SurfaceWaterTestsMixin,
     WatercourseTestsMixin,
+    ImportedIdTestsMixin,
     TestCase,
 ):
     model = models.Watercourse
@@ -991,6 +1004,7 @@ class WatercourseInsertTestCase(
     expected_level = 776.3
     expected_slope = 0.45
     expected_outlet_id = None
+    expected_imported_id = 1852
 
 
 class WatercourseUpdateTestCase(
@@ -1136,6 +1150,7 @@ class StandingWaterInsertTestCase(
     StandingWaterSetupInitialRowMixin,
     SurfaceWaterTestsMixin,
     StandingWaterTestsMixin,
+    ImportedIdTestsMixin,
     TestCase,
 ):
     model = models.StandingWater
@@ -1152,6 +1167,7 @@ class StandingWaterInsertTestCase(
     expected_elevation = 784.1
     expected_mean_depth = 18.7
     expected_surface_area = 4285.3
+    expected_imported_id = 1852
 
     @property
     def expected_outlet_id(self):
@@ -1237,21 +1253,23 @@ class StationSetupInitialRowMixin(StandingWaterSetupInitialRowMixin):
         )
         with connection.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO openhigis.Station (id, geometry, basin, surfacewater) "
-                "VALUES (42, 'SRID=2100;POINT(500000 4000000)', 1851, 1852);"
+                "INSERT INTO openhigis.Station (id, basin, surfacewater) "
+                "VALUES (42, 1851, 1852);"
             )
 
 
 class StationAdditionalTestsMixin:
-    def test_geom2100_x(self):
-        self.assertAlmostEqual(
-            self.model.objects.first().geom2100.x, self.expected_geom2100_x
-        )
+    def test_2100_x(self):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT ST_X(geometry) FROM openhigis.station")
+            row = cursor.fetchone()
+        self.assertAlmostEqual(row[0], self.expected_2100_x, places=2)
 
-    def test_geom2100_y(self):
-        self.assertAlmostEqual(
-            self.model.objects.first().geom2100.y, self.expected_geom2100_y
-        )
+    def test_2100_y(self):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT ST_Y(geometry) FROM openhigis.station")
+            row = cursor.fetchone()
+        self.assertAlmostEqual(row[0], self.expected_2100_y, places=2)
 
     def test_basin(self):
         self.assertEqual(self.model.objects.first().basin_id, self.expected_basin_id)
@@ -1276,8 +1294,8 @@ class StationInsertTestCase(
     expected_remarks = "Hello world"
     expected_x = 24.1
     expected_y = 38.2
-    expected_geom2100_x = 500000
-    expected_geom2100_y = 4000000
+    expected_2100_x = 508606.32
+    expected_2100_y = 4227722.74
 
 
 class StationUpdateTestCase(
@@ -1294,8 +1312,8 @@ class StationUpdateTestCase(
     expected_remarks = "Hello world"
     expected_x = 24.1
     expected_y = 38.2
-    expected_geom2100_x = 570000
-    expected_geom2100_y = 4570000
+    expected_2100_x = 508606.32
+    expected_2100_y = 4227722.74
 
     def setUp(self):
         super().setUp()
@@ -1326,10 +1344,42 @@ class StationDeleteTestCase(DeleteMixin, StationSetupInitialRowMixin, TestCase):
         self.assertEqual(enhydris_models.Station.objects.count(), 1)
 
 
-class StationSridTestCase(SridMixin, StationSetupInitialRowMixin, TestCase):
-    model = models.Station
-    view_name = "Station"
-    condition = "remarks = 'Hello world'"
+class StationForeignKeyDeleteTestCase(StationSetupInitialRowMixin, TestCase):
+    def test_deleting_river_basin_sets_station_basin_to_null(self):
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM openhigis.StandingWater WHERE id=1852")
+            cursor.execute("DELETE FROM openhigis.RiverBasin WHERE id=1851")
+        self.assertIsNone(models.Station.objects.first().basin_id)
+
+    def test_deleting_surface_water_sets_station_surface_water_to_null(self):
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM openhigis.StandingWater WHERE id=1852")
+        self.assertIsNone(models.Station.objects.first().surface_water_id)
+
+    def test_deleting_drainage_basin_sets_station_basin_to_null(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.DrainageBasin(id, geometry, riverBasin)
+                VALUES (1899, 'SRID=2100;POINT(500000 4000000)', 1851)
+                """
+            )
+            cursor.execute("UPDATE openhigis.Station SET basin=1899 WHERE id=42")
+            cursor.execute("DELETE FROM openhigis.StandingWater WHERE id=1852")
+            cursor.execute("DELETE FROM openhigis.DrainageBasin WHERE id=1899")
+        self.assertIsNone(models.Station.objects.first().basin_id)
+
+    def test_deleting_watercourse_sets_station_basin_to_null(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.Watercourse(id, geometry)
+                VALUES (1901, 'SRID=2100;POINT(500000 4000000)')
+                """
+            )
+            cursor.execute("UPDATE openhigis.Station SET surfaceWater=1901 WHERE id=42")
+            cursor.execute("DELETE FROM openhigis.Watercourse WHERE id=1901")
+        self.assertIsNone(models.Station.objects.first().surface_water_id)
 
 
 class WatercourseLinkSetupInitialRowMixin(HydroNodeSetupInitialRowMixin):

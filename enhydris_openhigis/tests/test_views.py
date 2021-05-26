@@ -17,7 +17,6 @@ class GetAllGeomodelsTestCase(TestCase):
                 models.RiverBasin,
                 models.RiverBasinDistrict,
                 models.StandingWater,
-                models.Station,
                 models.StationBasin,
                 models.Watercourse,
                 models.HydroNode,
@@ -41,10 +40,9 @@ class SearchDataMixin:
 
     def _make_point(self, name, coordinates):
         mommy.make(
-            models.Station,
+            models.DrainageBasin,
             name=name,
             geom2100=Point(x=coordinates[0] * 1000, y=coordinates[1] * 1000, srid=2100),
-            geom=Point(23, 38, srid=4326),
         )
 
 

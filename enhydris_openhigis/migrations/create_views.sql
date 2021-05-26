@@ -12,7 +12,7 @@ CREATE VIEW station
         g.name,
         g.remarks,
         g.code as hydroId,
-        gs.geom2100 AS geometry,
+        ST_Transform(g.geom, 2100) AS geometry,
         gp.altitude AS elevation,
         s.owner_id AS responsibleParty,
         basin.imported_id AS basin,
@@ -38,8 +38,8 @@ BEGIN
         FROM enhydris_openhigis_surfacewater
         WHERE imported_id = NEW.surfacewater;
     INSERT INTO enhydris_openhigis_station
-        (station_ptr_id, geom2100, basin_id, surface_water_id)
-        VALUES (NEW.id, NEW.geometry, new_basin_id, new_surface_water_id);
+        (station_ptr_id, basin_id, surface_water_id)
+        VALUES (NEW.id, new_basin_id, new_surface_water_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -61,7 +61,6 @@ BEGIN
         WHERE imported_id = NEW.surfacewater;
     UPDATE enhydris_openhigis_station
         SET
-            geom2100=NEW.geometry,
             basin_id=new_basin_id,
             surface_water_id=new_surface_water_id
         WHERE station_ptr_id=OLD.id;
@@ -179,6 +178,7 @@ BEGIN
         WHERE imported_id=NEW.outlet;
     UPDATE enhydris_openhigis_basin
         SET
+            imported_id=NEW.id,
             geom2100=NEW.geometry,
             man_made=CASE WHEN lower(NEW.origin) = 'manmade' THEN true
                           WHEN lower(NEW.origin) = 'natural' THEN false
@@ -235,6 +235,7 @@ BEGIN
         WHERE imported_id=NEW.outlet;
     UPDATE enhydris_openhigis_surfacewater
         SET
+            imported_id=NEW.id,
             geom2100=NEW.geometry,
             local_type=COALESCE(NEW.localType, ''),
             man_made=CASE WHEN lower(NEW.origin) = 'manmade' THEN true
@@ -289,7 +290,7 @@ BEGIN
         WHERE imported_id=OLD.id;
     PERFORM openhigis.update_gentity(gentity_id, OLD, NEW);
     UPDATE enhydris_openhigis_riverbasindistrict
-    SET geom2100=NEW.geometry
+    SET imported_id=NEW.id, geom2100=NEW.geometry
     WHERE imported_id=OLD.id;
     RETURN NEW;
 END;
@@ -417,6 +418,7 @@ DECLARE gentity_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_basin
         WHERE imported_id=OLD.id;
+    UPDATE enhydris_openhigis_station SET basin_id=NULL WHERE basin_id=gentity_id;
     DELETE FROM enhydris_openhigis_drainagebasin WHERE basin_ptr_id=gentity_id;
     DELETE FROM enhydris_openhigis_basin WHERE garea_ptr_id=gentity_id;
     DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
@@ -506,6 +508,7 @@ DECLARE gentity_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_basin
         WHERE imported_id=OLD.id;
+    UPDATE enhydris_openhigis_station SET basin_id=NULL WHERE basin_id=gentity_id;
     DELETE FROM enhydris_openhigis_riverbasin WHERE basin_ptr_id=gentity_id;
     DELETE FROM enhydris_openhigis_basin WHERE garea_ptr_id=gentity_id;
     DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
@@ -762,6 +765,7 @@ DECLARE gentity_id INTEGER;
 BEGIN
     SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_surfacewater
         WHERE imported_id=OLD.id;
+    UPDATE enhydris_openhigis_station SET surface_water_id=NULL WHERE surface_water_id=gentity_id;
     DELETE FROM enhydris_openhigis_watercourse WHERE surfacewater_ptr_id=gentity_id;
     DELETE FROM enhydris_openhigis_surfacewater WHERE gentity_ptr_id=gentity_id;
     DELETE FROM enhydris_gentity WHERE id=gentity_id;
@@ -959,6 +963,7 @@ DECLARE gentity_id INTEGER;
 BEGIN
     SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_surfacewater
         WHERE imported_id=OLD.id;
+    UPDATE enhydris_openhigis_station SET surface_water_id=NULL WHERE surface_water_id=gentity_id;
     DELETE FROM enhydris_openhigis_standingwater WHERE surfacewater_ptr_id=gentity_id;
     DELETE FROM enhydris_openhigis_surfacewater WHERE gentity_ptr_id=gentity_id;
     DELETE FROM enhydris_gentity WHERE id=gentity_id;
