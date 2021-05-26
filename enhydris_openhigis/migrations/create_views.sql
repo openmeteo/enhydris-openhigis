@@ -12,7 +12,7 @@ CREATE VIEW station
         g.name,
         g.remarks,
         g.code as hydroId,
-        gs.geom2100 AS geometry,
+        ST_Transform(g.geom, 2100) AS geometry,
         gp.altitude AS elevation,
         s.owner_id AS responsibleParty,
         basin.imported_id AS basin,
@@ -38,8 +38,8 @@ BEGIN
         FROM enhydris_openhigis_surfacewater
         WHERE imported_id = NEW.surfacewater;
     INSERT INTO enhydris_openhigis_station
-        (station_ptr_id, geom2100, basin_id, surface_water_id)
-        VALUES (NEW.id, NEW.geometry, new_basin_id, new_surface_water_id);
+        (station_ptr_id, basin_id, surface_water_id)
+        VALUES (NEW.id, new_basin_id, new_surface_water_id);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -61,7 +61,6 @@ BEGIN
         WHERE imported_id = NEW.surfacewater;
     UPDATE enhydris_openhigis_station
         SET
-            geom2100=NEW.geometry,
             basin_id=new_basin_id,
             surface_water_id=new_surface_water_id
         WHERE station_ptr_id=OLD.id;

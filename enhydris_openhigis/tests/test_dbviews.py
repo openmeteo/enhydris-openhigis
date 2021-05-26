@@ -1253,21 +1253,23 @@ class StationSetupInitialRowMixin(StandingWaterSetupInitialRowMixin):
         )
         with connection.cursor() as cursor:
             cursor.execute(
-                "INSERT INTO openhigis.Station (id, geometry, basin, surfacewater) "
-                "VALUES (42, 'SRID=2100;POINT(500000 4000000)', 1851, 1852);"
+                "INSERT INTO openhigis.Station (id, basin, surfacewater) "
+                "VALUES (42, 1851, 1852);"
             )
 
 
 class StationAdditionalTestsMixin:
-    def test_geom2100_x(self):
-        self.assertAlmostEqual(
-            self.model.objects.first().geom2100.x, self.expected_geom2100_x
-        )
+    def test_2100_x(self):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT ST_X(geometry) FROM openhigis.station")
+            row = cursor.fetchone()
+        self.assertAlmostEqual(row[0], self.expected_2100_x, places=2)
 
-    def test_geom2100_y(self):
-        self.assertAlmostEqual(
-            self.model.objects.first().geom2100.y, self.expected_geom2100_y
-        )
+    def test_2100_y(self):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT ST_Y(geometry) FROM openhigis.station")
+            row = cursor.fetchone()
+        self.assertAlmostEqual(row[0], self.expected_2100_y, places=2)
 
     def test_basin(self):
         self.assertEqual(self.model.objects.first().basin_id, self.expected_basin_id)
@@ -1292,8 +1294,8 @@ class StationInsertTestCase(
     expected_remarks = "Hello world"
     expected_x = 24.1
     expected_y = 38.2
-    expected_geom2100_x = 500000
-    expected_geom2100_y = 4000000
+    expected_2100_x = 508606.32
+    expected_2100_y = 4227722.74
 
 
 class StationUpdateTestCase(
@@ -1310,8 +1312,8 @@ class StationUpdateTestCase(
     expected_remarks = "Hello world"
     expected_x = 24.1
     expected_y = 38.2
-    expected_geom2100_x = 570000
-    expected_geom2100_y = 4570000
+    expected_2100_x = 508606.32
+    expected_2100_y = 4227722.74
 
     def setUp(self):
         super().setUp()
@@ -1378,12 +1380,6 @@ class StationForeignKeyDeleteTestCase(StationSetupInitialRowMixin, TestCase):
             cursor.execute("UPDATE openhigis.Station SET surfaceWater=1901 WHERE id=42")
             cursor.execute("DELETE FROM openhigis.Watercourse WHERE id=1901")
         self.assertIsNone(models.Station.objects.first().surface_water_id)
-
-
-class StationSridTestCase(SridMixin, StationSetupInitialRowMixin, TestCase):
-    model = models.Station
-    view_name = "Station"
-    condition = "remarks = 'Hello world'"
 
 
 class WatercourseLinkSetupInitialRowMixin(HydroNodeSetupInitialRowMixin):

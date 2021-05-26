@@ -60,7 +60,7 @@ class HydroOrderCodeMixin(models.Model):
         abstract = True
 
 
-class Station(EnhydrisStation, GGRS87Mixin):
+class Station(EnhydrisStation):
     basin = models.ForeignKey("Basin", on_delete=models.CASCADE, null=True, blank=True)
     surface_water = models.ForeignKey(
         "SurfaceWater", on_delete=models.CASCADE, null=True, blank=True
