@@ -1326,6 +1326,44 @@ class StationDeleteTestCase(DeleteMixin, StationSetupInitialRowMixin, TestCase):
         self.assertEqual(enhydris_models.Station.objects.count(), 1)
 
 
+class StationForeignKeyDeleteTestCase(StationSetupInitialRowMixin, TestCase):
+    def test_deleting_river_basin_sets_station_basin_to_null(self):
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM openhigis.StandingWater WHERE id=1852")
+            cursor.execute("DELETE FROM openhigis.RiverBasin WHERE id=1851")
+        self.assertIsNone(models.Station.objects.first().basin_id)
+
+    def test_deleting_surface_water_sets_station_surface_water_to_null(self):
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM openhigis.StandingWater WHERE id=1852")
+        self.assertIsNone(models.Station.objects.first().surface_water_id)
+
+    def test_deleting_drainage_basin_sets_station_basin_to_null(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.DrainageBasin(id, geometry, riverBasin)
+                VALUES (1899, 'SRID=2100;POINT(500000 4000000)', 1851)
+                """
+            )
+            cursor.execute("UPDATE openhigis.Station SET basin=1899 WHERE id=42")
+            cursor.execute("DELETE FROM openhigis.StandingWater WHERE id=1852")
+            cursor.execute("DELETE FROM openhigis.DrainageBasin WHERE id=1899")
+        self.assertIsNone(models.Station.objects.first().basin_id)
+
+    def test_deleting_watercourse_sets_station_basin_to_null(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO openhigis.Watercourse(id, geometry)
+                VALUES (1901, 'SRID=2100;POINT(500000 4000000)')
+                """
+            )
+            cursor.execute("UPDATE openhigis.Station SET surfaceWater=1901 WHERE id=42")
+            cursor.execute("DELETE FROM openhigis.Watercourse WHERE id=1901")
+        self.assertIsNone(models.Station.objects.first().surface_water_id)
+
+
 class StationSridTestCase(SridMixin, StationSetupInitialRowMixin, TestCase):
     model = models.Station
     view_name = "Station"

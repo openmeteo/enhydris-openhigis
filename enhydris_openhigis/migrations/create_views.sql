@@ -417,6 +417,7 @@ DECLARE gentity_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_basin
         WHERE imported_id=OLD.id;
+    UPDATE enhydris_openhigis_station SET basin_id=NULL WHERE basin_id=gentity_id;
     DELETE FROM enhydris_openhigis_drainagebasin WHERE basin_ptr_id=gentity_id;
     DELETE FROM enhydris_openhigis_basin WHERE garea_ptr_id=gentity_id;
     DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
@@ -506,6 +507,7 @@ DECLARE gentity_id INTEGER;
 BEGIN
     SELECT garea_ptr_id INTO gentity_id FROM enhydris_openhigis_basin
         WHERE imported_id=OLD.id;
+    UPDATE enhydris_openhigis_station SET basin_id=NULL WHERE basin_id=gentity_id;
     DELETE FROM enhydris_openhigis_riverbasin WHERE basin_ptr_id=gentity_id;
     DELETE FROM enhydris_openhigis_basin WHERE garea_ptr_id=gentity_id;
     DELETE FROM enhydris_garea WHERE gentity_ptr_id=gentity_id;
@@ -762,6 +764,7 @@ DECLARE gentity_id INTEGER;
 BEGIN
     SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_surfacewater
         WHERE imported_id=OLD.id;
+    UPDATE enhydris_openhigis_station SET surface_water_id=NULL WHERE surface_water_id=gentity_id;
     DELETE FROM enhydris_openhigis_watercourse WHERE surfacewater_ptr_id=gentity_id;
     DELETE FROM enhydris_openhigis_surfacewater WHERE gentity_ptr_id=gentity_id;
     DELETE FROM enhydris_gentity WHERE id=gentity_id;
@@ -959,6 +962,7 @@ DECLARE gentity_id INTEGER;
 BEGIN
     SELECT gentity_ptr_id INTO gentity_id FROM enhydris_openhigis_surfacewater
         WHERE imported_id=OLD.id;
+    UPDATE enhydris_openhigis_station SET surface_water_id=NULL WHERE surface_water_id=gentity_id;
     DELETE FROM enhydris_openhigis_standingwater WHERE surfacewater_ptr_id=gentity_id;
     DELETE FROM enhydris_openhigis_surfacewater WHERE gentity_ptr_id=gentity_id;
     DELETE FROM enhydris_gentity WHERE id=gentity_id;
