@@ -59,6 +59,14 @@ Installing and configuring
   ``MIDDLEWARE``, and specify the mapserver root url in
   ``ENHYDRIS_OWS_URL``.
 
+  ``ENHYDRIS_OWS_URL`` must end in a slash; it does not include the
+  filename ``openhigis.map``, which is hardwired and appended to
+  ``ENHYDRIS_OWS_URL`` automatically. In fact, the current language may
+  also be inserted, so that the resulting URL may be something like
+  ``ENHYDRIS_OWS_URL/el/openhigis.map`` (but
+  ``ENHYDRIS_OWS_URL/openhigis.map`` also works; it is the default
+  "unlocalized"—actually English—URL).
+
   ``ENHYDRIS_OWS_URL`` can be empty. In that case, the openhigis UI
   elements (search geodata, extra layers) aren't shown. This is useful
   if we want the database tables/views to be installed but for the UI to
