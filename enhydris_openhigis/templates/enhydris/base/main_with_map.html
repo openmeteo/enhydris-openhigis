@@ -1,5 +1,6 @@
 {% extends "enhydris/base/main_with_map-default.html" %}
 {% load static %}
+{% load i18n %}
 
 {% block basecss %}
   {{ block.super }}
@@ -24,6 +25,13 @@
       enhydris.openhigis = {
           search_url: "{% url 'openhigis_search' 'SEARCH_TERM' %}",
           ows_url: "{{ request.openhigis.ows_url }}",
+          strings: {
+            Watercourses: '{% trans "Streams" %}',
+            StandingWaters: '{% trans "Lakes" %}',
+            StationBasins: '{% trans "Basins upstream of stations" %}',
+            RiverBasins: '{% trans "Basins" %}',
+            DrainageBasins: '{% trans "Subbasins" %}',
+          },
       };
     </script>
     <script type="text/javascript" src="{% static 'js/vendor/betterwms.js' %}"></script>
