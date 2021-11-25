@@ -360,7 +360,7 @@ CREATE VIEW DrainageBasin
         INNER JOIN enhydris_openhigis_basin riverbasin_basin
             ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id
         LEFT JOIN enhydris_openhigis_hydronode outlet
-            ON basin.outlet_id = outlet.imported_id;
+            ON basin.outlet_id = outlet.gpoint_ptr_id;
 
 CREATE OR REPLACE FUNCTION insert_into_DrainageBasin() RETURNS TRIGGER
 AS $$
@@ -466,7 +466,7 @@ CREATE VIEW RiverBasin
         INNER JOIN enhydris_openhigis_riverbasin rb
             ON rb.basin_ptr_id = g.id
         LEFT JOIN enhydris_openhigis_hydronode outlet
-            ON basin.outlet_id = outlet.imported_id;
+            ON basin.outlet_id = outlet.gpoint_ptr_id;
 
 CREATE OR REPLACE FUNCTION insert_into_RiverBasin() RETURNS TRIGGER
 AS $$
@@ -561,7 +561,7 @@ CREATE VIEW StationBasin
         INNER JOIN enhydris_gentity station
         ON station.id = sb.station_id 
         LEFT JOIN enhydris_openhigis_hydronode outlet
-            ON sb.outlet_id = outlet.imported_id;
+            ON sb.outlet_id = outlet.gpoint_ptr_id;
 
 CREATE OR REPLACE FUNCTION insert_into_StationBasin() RETURNS TRIGGER
 AS $$
@@ -703,7 +703,7 @@ CREATE VIEW Watercourse
         LEFT JOIN enhydris_openhigis_basin riverbasin_basin
             ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id
         LEFT JOIN enhydris_openhigis_hydronode outlet
-            ON surfacewater.outlet_id = outlet.imported_id;
+            ON surfacewater.outlet_id = outlet.gpoint_ptr_id;
 
 
 CREATE OR REPLACE FUNCTION insert_into_Watercourse() RETURNS TRIGGER
@@ -914,7 +914,7 @@ CREATE VIEW StandingWater
         LEFT JOIN enhydris_openhigis_basin riverbasin_basin
             ON riverbasin_basin.garea_ptr_id = riverbasin.basin_ptr_id
         LEFT JOIN enhydris_openhigis_hydronode outlet
-            ON surfacewater.outlet_id = outlet.imported_id;
+            ON surfacewater.outlet_id = outlet.gpoint_ptr_id;
 
 CREATE OR REPLACE FUNCTION insert_into_StandingWater() RETURNS TRIGGER
 AS $$
