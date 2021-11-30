@@ -512,7 +512,7 @@ class RiverBasinSridTestCase(DrainageBasinSridTestCase):
     view_name = "RiverBasin"
 
 
-class InsertEntityWithNullGeographicalNameTestCase(TestCase):
+class NullGeographicalNameTestCase(TestCase):
     def setUp(self):
         with connection.cursor() as cursor:
             cursor.execute(
@@ -524,7 +524,14 @@ class InsertEntityWithNullGeographicalNameTestCase(TestCase):
                 """
             )
 
-    def test_name(self):
+    def test_insert(self):
+        self.assertEqual(models.RiverBasinDistrict.objects.first().name, "")
+
+    def test_update(self):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE openhigis.RiverBasinDistrict SET geographicalName=NULL"
+            )
         self.assertEqual(models.RiverBasinDistrict.objects.first().name, "")
 
 
