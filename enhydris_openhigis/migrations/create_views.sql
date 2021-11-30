@@ -132,7 +132,7 @@ AS $$
 BEGIN
     UPDATE enhydris_gentity
         SET
-            name=NEW.geographicalName,
+            name=COALESCE(NEW.geographicalName, ''),
             code=COALESCE(NEW.hydroId, ''),
             remarks=COALESCE(NEW.remarks, ''),
             geom=ST_Transform(NEW.geometry, 4326)
