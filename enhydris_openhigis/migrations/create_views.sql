@@ -92,12 +92,13 @@ CREATE OR REPLACE FUNCTION insert_into_gentity(NEW ANYELEMENT) RETURNS integer
 AS $$
 DECLARE gentity_id INTEGER;
 BEGIN
-    INSERT INTO enhydris_gentity (name, code, remarks, geom)
+    INSERT INTO enhydris_gentity (name, code, remarks, geom, display_timezone)
         VALUES (
             COALESCE(NEW.geographicalName, ''),
             COALESCE(NEW.hydroId, ''),
             COALESCE(NEW.remarks, ''),
-            ST_Transform(NEW.geometry, 4326)
+            ST_Transform(NEW.geometry, 4326),
+            ''
         )
         RETURNING id INTO gentity_id;
     RETURN gentity_id;
