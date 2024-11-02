@@ -46,6 +46,7 @@ class SearchDataMixin:
         )
 
 
+@override_settings(ENHYDRIS_AUTHENTICATION_REQUIRED=False)
 class SearchViewTestCase(SearchDataMixin, TestCase):
     def _test(self, search_term, expected_x1, expected_y1, expected_x2, expected_y2):
         response = self.client.get(
