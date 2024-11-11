@@ -10,11 +10,11 @@ class OpenHiGISMiddleware:
         lang = translation.get_language()
         if lang != "el":
             lang = ""
+        else:
+            lang = f"/{lang}"
         ows_url_base = settings.ENHYDRIS_OWS_URL
         if ows_url_base.endswith("/"):
             ows_url_base = ows_url_base[:-1]
-        request.openhigis = {
-            "ows_url": f"{ows_url_base}{lang}/openhigis.map"
-        }
+        request.openhigis = {"ows_url": f"{ows_url_base}{lang}/openhigis.map"}
         response = self.get_response(request)
         return response
