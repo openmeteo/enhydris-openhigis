@@ -1,7 +1,7 @@
 from django.db import connection
 from django.test import TestCase
 
-from model_mommy import mommy
+from model_bakery import baker
 
 from enhydris import models as enhydris_models
 from enhydris_openhigis import models
@@ -566,7 +566,7 @@ class ManMadeMixin:
                 VALUES (99, 'SRID=2100;POINT(500000 4000000)')
                 """
             )
-            mommy.make(models.Station, id=42)
+            baker.make(models.Station, id=42)
             cursor.execute(
                 f"""
                 INSERT INTO openhigis.StationBasin (id, geometry, riverBasin, origin)
@@ -637,7 +637,7 @@ class StationBasinSetupInitialRowMixin(
 ):
     def setUp(self):
         super().setUp()
-        mommy.make(models.Station, id=1852, name="Χόμπιτον")
+        baker.make(models.Station, id=1852, name="Χόμπιτον")
         with connection.cursor() as cursor:
             cursor.execute(
                 """
@@ -1249,11 +1249,11 @@ class StandingWaterSridTestCase(SridMixin, StandingWaterSetupInitialRowMixin, Te
 class StationSetupInitialRowMixin(StandingWaterSetupInitialRowMixin):
     def setUp(self):
         super().setUp()
-        self.station = mommy.make(
+        self.station = baker.make(
             enhydris_models.Station,
             id=42,
             name="Hobbiton",
-            owner=mommy.make(enhydris_models.Organization, name="Hobbits, Inc"),
+            owner=baker.make(enhydris_models.Organization, name="Hobbits, Inc"),
             code="BETA18",
             remarks="Hello world",
             geom="SRID=4326;POINT(24.1 38.2)",

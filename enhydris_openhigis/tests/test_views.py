@@ -2,7 +2,7 @@ from django.contrib.gis.geos import Point
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from model_mommy import mommy
+from model_bakery import baker
 
 from enhydris_openhigis import models
 from enhydris_openhigis.views import get_all_geomodels
@@ -39,7 +39,7 @@ class SearchDataMixin:
             self._make_point(p, self.points[p])
 
     def _make_point(self, name, coordinates):
-        mommy.make(
+        baker.make(
             models.DrainageBasin,
             name=name,
             geom2100=Point(x=coordinates[0] * 1000, y=coordinates[1] * 1000, srid=2100),
